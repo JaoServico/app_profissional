@@ -103,18 +103,23 @@ class _PerfilPageState extends State<PerfilPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     GestureDetector(
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/redessociais'),
-                      child: _buildPerfilIcone(Icons.people, "Redes\nSociais"),
+                      onTap: () => Navigator.pushNamed(context, '/contatos'),
+                      child: _buildPerfilIcone(Icons.people, "Contatos \n"),
                     ),
                     GestureDetector(
                         onTap: () =>
                             Navigator.pushNamed(context, '/certificados'),
                         child: _buildPerfilIcone(
                             Icons.school, "Certificados\nFormações")),
-                    _buildPerfilIcone(
-                        Icons.location_on, "Contato e \n Localização"),
-                    _buildPerfilIcone(Icons.business_center, "Negócios\n"),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/cidades'),
+                      child: _buildPerfilIcone(
+                          Icons.location_on, "Cidades \n de atuação"),
+                    ),
+                    GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/negocios'),
+                        child: _buildPerfilIcone(
+                            Icons.business_center, "Negócios\n")),
                     GestureDetector(
                         onTap: () =>
                             Navigator.pushNamed(context, '/habilidades'),

@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:jao_servico_profissional/cores.dart';
 
-class RedesSociais extends StatefulWidget {
-  const RedesSociais({super.key});
+class ContatosPage extends StatefulWidget {
+  const ContatosPage({super.key});
 
   @override
-  State<RedesSociais> createState() => _RedesSociaisState();
+  State<ContatosPage> createState() => _ContatosPageState();
 }
 
-class _RedesSociaisState extends State<RedesSociais> {
+class _ContatosPageState extends State<ContatosPage> {
   bool editando = false;
 
+  final TextEditingController whatsappController = TextEditingController();
+  final TextEditingController telefoneController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController facebookController = TextEditingController();
   final TextEditingController instagramController = TextEditingController();
   final TextEditingController linkedinController = TextEditingController();
@@ -27,7 +30,7 @@ class _RedesSociaisState extends State<RedesSociais> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                "Redes Sociais",
+                "Contatos",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -38,14 +41,18 @@ class _RedesSociaisState extends State<RedesSociais> {
                 height: 8,
               ),
               const Text(
-                "Cadastre e edite suas redes sociais aqui",
+                "Cadastre e edite seus contatos e redes sociais aqui",
                 style: TextStyle(
                   fontSize: 16,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(
                 height: 30,
               ),
+              _buildTextField("Whatsapp", whatsappController),
+              _buildTextField("Telefone", telefoneController),
+              _buildTextField("Email", emailController),
               _buildTextField("Facebook", facebookController),
               _buildTextField("Instagram", instagramController),
               _buildTextField("Linkedin", linkedinController),
