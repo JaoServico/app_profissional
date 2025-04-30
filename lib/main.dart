@@ -9,8 +9,14 @@ import 'package:jao_servico_profissional/telas/login_page.dart';
 import 'package:jao_servico_profissional/telas/negocios.dart';
 import 'package:jao_servico_profissional/telas/perfil_page.dart';
 import 'package:jao_servico_profissional/telas/contatos.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 

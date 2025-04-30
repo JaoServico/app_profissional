@@ -1,8 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:jao_servico_profissional/cores.dart';
+import 'package:jao_servico_profissional/servicos/auth.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
+  bool _isLoading = false;
+  final _formKey = GlobalKey<FormState>();
+
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
+      final sucesso = await AuthService().signIn(
+        email: _emailController.text,
+        senha: _senhaController.text,
+      );
+
+      setState(() => _isLoading = false);
+
+      if (sucesso) {
+        Navigator.pushNamed(context, '/');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Erro ao fazer login. Verifique os dados")),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _senhaController.dispose();
+    super.dispose();
+  }
+
+  //Metodo para criar os TextFormFields
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    required String? Function(String?) validator,
+    bool obscureText = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      validator: validator,
+      decoration: InputDecoration(
+        label: RichText(
+          text: TextSpan(
+            text: labelText,
+            style: const TextStyle(color: Cores.preto, fontSize: 16),
+            children: const [
+              TextSpan(
+                text: " *",
+                style: TextStyle(color: Cores.vermelho, fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+        filled: true,
+        fillColor: Cores.branco,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,8 +109,44 @@ class LoginPage extends StatelessWidget {
             const SizedBox(
               height: 40,
             ),
-            _buildTextField("Email"),
-            _buildTextField("Senha", isPassword: true),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _buildTextField(
+                    controller: _emailController,
+                    labelText: "Email",
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Digite o email";
+                      }
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                          .hasMatch(value)) {
+                        return 'E-mail inválido';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  _buildTextField(
+                    controller: _senhaController,
+                    labelText: "Senha",
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Digite a senha";
+                      }
+                      if (value.length < 6) {
+                        return "A senha deve ter no mínimo 6 caracteres";
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(
               height: 20,
             ),
@@ -44,9 +154,7 @@ class LoginPage extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/');
-                    },
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Cores.laranja,
                       side: BorderSide(
@@ -101,35 +209,6 @@ class LoginPage extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, {bool isPassword = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextField(
-        obscureText: isPassword,
-        decoration: InputDecoration(
-          label: RichText(
-            text: TextSpan(
-              text: label,
-              style: const TextStyle(color: Cores.preto, fontSize: 16),
-              children: const [
-                TextSpan(
-                  text: " *",
-                  style: TextStyle(color: Cores.vermelho, fontSize: 16),
-                ),
-              ],
-            ),
-          ),
-          filled: true,
-          fillColor: Cores.branco,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
         ),
       ),
     );

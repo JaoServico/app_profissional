@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jao_servico_profissional/componentes/rodape.dart';
 import 'package:jao_servico_profissional/cores.dart';
+import 'package:jao_servico_profissional/servicos/auth.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -147,6 +148,26 @@ class _HomeState extends State<Home> {
                   _buildDrawerItem(Icons.chat, "Suporte", ""),
                 ],
               ),
+            ),
+            const Divider(),
+            ListTile(
+              leading: Icon(
+                Icons.exit_to_app,
+                color: Cores.azul,
+              ),
+              title: Text(
+                "Sair",
+                style: TextStyle(color: Cores.azul),
+              ),
+              onTap: () async {
+                await AuthService().logout();
+                if (context.mounted) {
+                  Navigator.pushReplacementNamed(context, '/loginPage');
+                }
+              },
+            ),
+            const SizedBox(
+              height: 20,
             ),
           ],
         ),
