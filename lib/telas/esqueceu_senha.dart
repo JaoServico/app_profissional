@@ -1,8 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:jao_servico_profissional/cores.dart';
+import 'package:jao_servico_profissional/servicos/auth.dart';
 
-class EsqueceuSenha extends StatelessWidget {
+class EsqueceuSenha extends StatefulWidget {
   const EsqueceuSenha({super.key});
+
+  @override
+  State<EsqueceuSenha> createState() => _EsqueceuSenhaState();
+}
+
+class _EsqueceuSenhaState extends State<EsqueceuSenha> {
+  final _emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
+
+  Future<void> _enviarLink() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      final sucesso = await AuthService()
+          .sendPasswordResetEmail(email: _emailController.text);
+      setState(() => _isLoading = false);
+
+      final mensagem = sucesso
+          ? "Link de recuperação enviado para o email informado."
+          : "Erro ao enviar o link. Verifique o email informado";
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensagem)),
+      );
+
+      if (sucesso && context.mounted) {
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,26 +74,38 @@ class EsqueceuSenha extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
-              child: TextField(
-                decoration: InputDecoration(
-                  label: RichText(
-                    text: const TextSpan(
-                      text: "Email",
-                      style: TextStyle(color: Cores.preto, fontSize: 16),
-                      children: [
-                        TextSpan(
-                          text: " *",
-                          style: TextStyle(color: Cores.vermelho, fontSize: 16),
-                        ),
-                      ],
+              child: Form(
+                key: _formKey,
+                child: TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    label: RichText(
+                      text: const TextSpan(
+                        text: "Email",
+                        style: TextStyle(color: Cores.preto, fontSize: 16),
+                        children: [
+                          TextSpan(
+                            text: " *",
+                            style:
+                                TextStyle(color: Cores.vermelho, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Cores.branco,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
                     ),
                   ),
-                  filled: true,
-                  fillColor: Cores.branco,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty)
+                      return 'Informe um email válido.';
+                    if (!value.contains('@'))
+                      return 'Formato de email inválido.';
+                    return null;
+                  },
                 ),
               ),
             ),
@@ -67,10 +116,7 @@ class EsqueceuSenha extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Navigator.pushNamed(
-                      //     context, '/telaConfirmacaoIndicacao');
-                    },
+                    onPressed: _isLoading ? null : _enviarLink,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Cores.laranja,
                       side: BorderSide(

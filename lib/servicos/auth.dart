@@ -42,9 +42,15 @@ class AuthService {
   }
 
   //Função para recuperar senha
-  Future<void> sendPasswordResetEmail(String email) async {
-    await _auth.sendPasswordResetEmail(
-      email: email,
-    );
+  Future<bool> sendPasswordResetEmail({required String email}) async {
+    try {
+      await _auth.sendPasswordResetEmail(
+        email: email,
+      );
+      return true;
+    } catch (e) {
+      print("Erro ao enviar o email de recuperação: $e");
+      return false;
+    }
   }
 }
