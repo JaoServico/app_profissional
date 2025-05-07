@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jao_servico_profissional/componentes/rodape.dart';
+import 'package:jao_servico_profissional/models/rodape.dart';
 import 'package:jao_servico_profissional/cores.dart';
-import 'package:jao_servico_profissional/servicos/auth.dart';
+import 'package:jao_servico_profissional/controllers/auth.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});

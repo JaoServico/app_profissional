@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jao_servico_profissional/cores.dart';
-import 'package:jao_servico_profissional/servicos/auth.dart';
+import 'package:jao_servico_profissional/controllers/auth.dart';
 
 class EsqueceuSenha extends StatefulWidget {
   const EsqueceuSenha({super.key});

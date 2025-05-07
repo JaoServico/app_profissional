@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:jao_servico_profissional/telas/cadastro_page.dart';
-import 'package:jao_servico_profissional/telas/certificados.dart';
-import 'package:jao_servico_profissional/telas/cidades.dart';
-import 'package:jao_servico_profissional/telas/esqueceu_senha.dart';
-import 'package:jao_servico_profissional/telas/habilidades.dart';
-import 'package:jao_servico_profissional/telas/home.dart';
-import 'package:jao_servico_profissional/telas/login_page.dart';
-import 'package:jao_servico_profissional/telas/negocios.dart';
-import 'package:jao_servico_profissional/telas/perfil_page.dart';
-import 'package:jao_servico_profissional/telas/contatos.dart';
+import 'package:jao_servico_profissional/views/cadastro_page.dart';
+import 'package:jao_servico_profissional/views/certificados.dart';
+import 'package:jao_servico_profissional/views/cidades.dart';
+import 'package:jao_servico_profissional/views/esqueceu_senha.dart';
+import 'package:jao_servico_profissional/views/habilidades.dart';
+import 'package:jao_servico_profissional/views/home.dart';
+import 'package:jao_servico_profissional/views/login_page.dart';
+import 'package:jao_servico_profissional/views/negocios.dart';
+import 'package:jao_servico_profissional/views/perfil_page.dart';
+import 'package:jao_servico_profissional/views/contatos.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 

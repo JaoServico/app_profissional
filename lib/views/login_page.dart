@@ -1,28 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:jao_servico_profissional/cores.dart';
-import '../servicos/auth.dart';
+import 'package:jao_servico_profissional/controllers/auth.dart';
 
-class CadastroPage extends StatefulWidget {
-  const CadastroPage({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<CadastroPage> createState() => _CadastroPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _CadastroPageState extends State<CadastroPage> {
-  final _formkey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _senhaController = TextEditingController();
-  final _repetirSenhaController = TextEditingController();
-
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
   bool _isLoading = false;
+  final _formKey = GlobalKey<FormState>();
 
-  //Gera Textfields
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
+      final sucesso = await AuthService().signIn(
+        email: _emailController.text,
+        senha: _senhaController.text,
+      );
+
+      setState(() => _isLoading = false);
+
+      if (sucesso) {
+        Navigator.pushReplacementNamed(context, '/');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Erro ao fazer login. Verifique os dados")),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _senhaController.dispose();
+    super.dispose();
+  }
+
+  //Metodo para criar os TextFormFields
   Widget _buildTextField({
     required TextEditingController controller,
     required String labelText,
+    required String? Function(String?) validator,
     bool obscureText = false,
-    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
@@ -51,40 +78,6 @@ class _CadastroPageState extends State<CadastroPage> {
     );
   }
 
-  //Funcão de cadastro
-  Future<void> _cadastrar() async {
-    if (_formkey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      final sucesso = await AuthService()
-          .signUp(email: _emailController.text, senha: _senhaController.text);
-
-      setState(() => _isLoading = false);
-
-      if (sucesso) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Cadastro realizado com sucesso!"),
-          ),
-        );
-        Navigator.pushNamed(context, '/loginPage');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Erro ao registrar."),
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _senhaController.dispose();
-    _repetirSenhaController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,7 +91,7 @@ class _CadastroPageState extends State<CadastroPage> {
               height: 80,
             ),
             Text(
-              "Cadastro",
+              "Login",
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -109,7 +102,7 @@ class _CadastroPageState extends State<CadastroPage> {
               height: 10,
             ),
             const Text(
-              "Crie sua conta para acessar o aplicativo",
+              "Entre no app para cadastrar seu serviços",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: Cores.preto),
             ),
@@ -117,15 +110,19 @@ class _CadastroPageState extends State<CadastroPage> {
               height: 40,
             ),
             Form(
-              key: _formkey,
+              key: _formKey,
               child: Column(
                 children: [
                   _buildTextField(
                     controller: _emailController,
-                    labelText: 'Email',
+                    labelText: "Email",
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return "Digite seu email";
+                        return "Digite o email";
+                      }
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                          .hasMatch(value)) {
+                        return 'E-mail inválido';
                       }
                       return null;
                     },
@@ -135,27 +132,14 @@ class _CadastroPageState extends State<CadastroPage> {
                   ),
                   _buildTextField(
                     controller: _senhaController,
-                    labelText: 'Senha',
+                    labelText: "Senha",
                     obscureText: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return "Digite sua senha";
+                        return "Digite a senha";
                       }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  _buildTextField(
-                    controller: _repetirSenhaController,
-                    labelText: 'Repetir senha',
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Repita sua senha";
-                      } else if (value != _senhaController.text) {
-                        return "As senhas não coincidem";
+                      if (value.length < 6) {
+                        return "A senha deve ter no mínimo 6 caracteres";
                       }
                       return null;
                     },
@@ -170,7 +154,7 @@ class _CadastroPageState extends State<CadastroPage> {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _cadastrar,
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Cores.laranja,
                       side: BorderSide(
@@ -182,7 +166,7 @@ class _CadastroPageState extends State<CadastroPage> {
                       ),
                     ),
                     child: Text(
-                      "Cadastrar",
+                      "Entrar",
                       style: TextStyle(
                         color: Cores.azul,
                         fontSize: 18,
@@ -191,6 +175,38 @@ class _CadastroPageState extends State<CadastroPage> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/esqueceuSenha');
+              },
+              child: Text(
+                "Esqueci a senha",
+                style: TextStyle(
+                  color: Cores.azul,
+                  fontSize: 16,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/cadastroPage');
+              },
+              child: Text(
+                "Criar conta",
+                style: TextStyle(
+                  color: Cores.azul,
+                  fontSize: 16,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ),
           ],
         ),

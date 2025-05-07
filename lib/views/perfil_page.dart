@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:jao_servico_profissional/componentes/rodape.dart';
+import 'package:jao_servico_profissional/controllers/perfil_controller.dart';
+import 'package:jao_servico_profissional/models/rodape.dart';
 import 'package:jao_servico_profissional/cores.dart';
+import 'package:jao_servico_profissional/repositories/perfil_repository.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
@@ -10,15 +12,28 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
+  final _controller = PerfilController(repository: PerfilRepository());
   bool _isEditing = false;
+  bool _isLoading = false;
+  String? _fotoUrl;
 
-  //Controladores TextFields
-  TextEditingController nomeController =
-      TextEditingController(text: "João Silva");
-  TextEditingController emailController =
-      TextEditingController(text: "joao@exemplo.com");
-  TextEditingController detalhesController =
-      TextEditingController(text: "Profissional com 10 anos de experiência...");
+  final TextEditingController nomeController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController detalhesController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+  }
+
+
+  Future<void> _carregarDados() async{
+    setState(() => _isLoading = true);
+
+    final perfil = await _controller.carregarPerfil(uid)
+
+  }
 
   @override
   Widget build(BuildContext context) {
