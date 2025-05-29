@@ -5,23 +5,16 @@ class PerfilRepository {
   final _firestore = FirebaseFirestore.instance;
 
   Future<PerfilModel?> getPerfil(String uid) async {
-    final snapshot = await _firestore
-        .collection('profissionais')
-        .doc(uid)
-        .collection('perfil')
-        .limit(1)
-        .get();
+    final doc = await _firestore.collection('profissionais').doc(uid).get();
 
-    if (snapshot.docs.isEmpty) return null;
-    return PerfilModel.fromMap(snapshot.docs.first.data());
+    if (!doc.exists) return null;
+    return PerfilModel.fromMap(doc.data()!);
   }
 
-  Future<void> savePerfil(String uid,PerfilModel perfil) async {
+  Future<void> savePerfil(String uid, PerfilModel perfil) async {
     await _firestore
         .collection('profissionais')
         .doc(uid)
-        .collection('perfil')
-        .doc('dados')
-        .set(perfil.toMap());
+        .set(perfil.toMap(), SetOptions(merge: true));
   }
 }

@@ -1,5 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:jao_servico_profissional/controllers/perfil_controller.dart';
+import 'package:jao_servico_profissional/models/perfil_model.dart';
 import 'package:jao_servico_profissional/models/rodape.dart';
 import 'package:jao_servico_profissional/cores.dart';
 import 'package:jao_servico_profissional/repositories/perfil_repository.dart';
@@ -12,27 +15,57 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
+  final _formkey = GlobalKey<FormState>();
   final _controller = PerfilController(repository: PerfilRepository());
   bool _isEditing = false;
-  bool _isLoading = false;
-  String? _fotoUrl;
 
-  final TextEditingController nomeController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController detalhesController = TextEditingController();
+  final nomeController = TextEditingController();
+  final detalhesController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _carregarDados();
+    carregarPerfil();
   }
 
+  Future<void> carregarPerfil() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final perfil = await _controller.carregarPerfil(uid);
+    if (perfil != null) {
+      setState(() {
+        nomeController.text = perfil.nome!;
+        detalhesController.text = perfil.detalhes!;
+      });
+    }
+  }
 
-  Future<void> _carregarDados() async{
-    setState(() => _isLoading = true);
+  Future<void> salvarPerfil() async {
+    if (_formkey.currentState!.validate()) {
+      try {
+        final uid = FirebaseAuth.instance.currentUser!.uid;
+        final perfil = PerfilModel(
+          nome: nomeController.text,
+          detalhes: detalhesController.text,
+          fotoUrl: '',
+        );
 
-    final perfil = await _controller.carregarPerfil(uid)
+        await _controller.salvarPerfil(uid, perfil);
 
+        setState(() {
+          _isEditing = false;
+        });
+
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Perfil salvo com sucesso')),
+        );
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao salvar o perfil: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -43,143 +76,146 @@ class _PerfilPageState extends State<PerfilPage> {
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // const SizedBox(
-                //   height: 40,
-                // ),
-                Text(
-                  "Perfil",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Cores.azul,
+            child: Form(
+              key: _formkey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // const SizedBox(
+                  //   height: 40,
+                  // ),
+                  Text(
+                    "Perfil",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Cores.azul,
+                    ),
                   ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                const Text(
-                  "Aqui você consegue acessar e editar suas informações",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Cores.preto),
-                ),
-                const SizedBox(
-                  height: 30,
-                ),
-                //Foto de Perfil
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.circular(15),
-                    image: const DecorationImage(
-                        image: AssetImage('assets/profissional.png'),
-                        fit: BoxFit.cover),
+                  const SizedBox(
+                    height: 10,
                   ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                  const Text(
+                    "Aqui você consegue acessar e editar suas informações",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Cores.preto),
+                  ),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  //Foto de Perfil
+                  Container(
+                    width: 120,
+                    height: 120,
                     decoration: BoxDecoration(
-                      color: Cores.azul.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.add_a_photo,
-                          color: Cores.azul,
-                          size: 18,
-                        ),
-                        const SizedBox(
-                          width: 8,
-                        ),
-                        Text(
-                          "Alterar imagem",
-                          style: TextStyle(color: Cores.azul, fontSize: 12),
-                        ),
-                      ],
+                      shape: BoxShape.rectangle,
+                      borderRadius: BorderRadius.circular(15),
+                      image: const DecorationImage(
+                          image: AssetImage('assets/profissional.png'),
+                          fit: BoxFit.cover),
                     ),
                   ),
-                ),
-                const SizedBox(
-                  height: 30,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/contatos'),
-                      child: _buildPerfilIcone(Icons.people, "Contatos \n"),
-                    ),
-                    GestureDetector(
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/certificados'),
-                        child: _buildPerfilIcone(
-                            Icons.school, "Certificados\nFormações")),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/cidades'),
-                      child: _buildPerfilIcone(
-                          Icons.location_on, "Cidades \n de atuação"),
-                    ),
-                    GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/negocios'),
-                        child: _buildPerfilIcone(
-                            Icons.business_center, "Negócios\n")),
-                    GestureDetector(
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/habilidades'),
-                        child: _buildPerfilIcone(Icons.star, "Habilidades\n")),
-                  ],
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                //Formulário de informações
-                _buildTextField("Nome", nomeController),
-                _buildTextField("Email", emailController),
-                _buildTextField("Detalhes", detalhesController),
-                const SizedBox(
-                  height: 10,
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(
-                            () {
-                              _isEditing = !_isEditing;
-                            },
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Cores.laranja,
-                          side: BorderSide(
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 6, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Cores.azul.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add_a_photo,
                             color: Cores.azul,
-                            width: 2,
+                            size: 18,
                           ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 32, vertical: 12),
-                        ),
-                        child: Text(
-                          _isEditing ? "Concluir" : "Editar",
-                          style: TextStyle(color: Cores.azul, fontSize: 18),
-                        ),
+                          const SizedBox(
+                            width: 8,
+                          ),
+                          Text(
+                            "Alterar imagem",
+                            style: TextStyle(color: Cores.azul, fontSize: 12),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/contatos'),
+                        child: _buildPerfilIcone(Icons.people, "Contatos \n"),
+                      ),
+                      GestureDetector(
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/certificados'),
+                          child: _buildPerfilIcone(
+                              Icons.school, "Certificados\nFormações")),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/cidades'),
+                        child: _buildPerfilIcone(
+                            Icons.location_on, "Cidades \n de atuação"),
+                      ),
+                      GestureDetector(
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/negocios'),
+                          child: _buildPerfilIcone(
+                              Icons.business_center, "Negócios\n")),
+                      GestureDetector(
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/habilidades'),
+                          child:
+                              _buildPerfilIcone(Icons.star, "Habilidades\n")),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  //Formulário de informações
+                  _buildTextField("Nome", nomeController),
+                  _buildTextField("Detalhes", detalhesController),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_isEditing) {
+                              salvarPerfil();
+                            }
+                            setState(() => _isEditing = !_isEditing);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Cores.laranja,
+                            side: BorderSide(
+                              color: Cores.azul,
+                              width: 2,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 12),
+                          ),
+                          child: Text(
+                            _isEditing ? "Concluir" : "Editar",
+                            style: TextStyle(color: Cores.azul, fontSize: 18),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -219,10 +255,13 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   //Funcao para os TextFields
-  Widget _buildTextField(String label, TextEditingController controller) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         readOnly: !_isEditing, // Desbloqueia quando esta no modo de edicao
         decoration: InputDecoration(

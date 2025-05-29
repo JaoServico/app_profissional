@@ -6,31 +6,33 @@ class Rodape extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Cores.laranjaSuave,
-      height: 60,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildRodapeItem(
-            icon: Icons.home,
-            label: "Inicio",
-            onTap: () {
-              if (ModalRoute.of(context)?.settings.name != '/') {
-                Navigator.pushNamed(context, '/');
-              }
-            },
-          ),
-          _buildRodapeItem(
-            icon: Icons.person,
-            label: "Perfil",
-            onTap: () {
-              if (ModalRoute.of(context)?.settings.name != '/perfilPage') {
-                Navigator.pushNamed(context, '/perfilPage');
-              }
-            },
-          ),
-        ],
+    return SafeArea(
+      child: Container(
+        color: Cores.laranjaSuave,
+        height: 60,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildRodapeItem(
+              icon: Icons.home,
+              label: "Inicio",
+              onTap: () {
+                if (ModalRoute.of(context)?.settings.name != '/') {
+                  Navigator.pushNamed(context, '/');
+                }
+              },
+            ),
+            _buildRodapeItem(
+              icon: Icons.person,
+              label: "Perfil",
+              onTap: () {
+                if (ModalRoute.of(context)?.settings.name != '/perfilPage') {
+                  Navigator.pushNamed(context, '/perfilPage');
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

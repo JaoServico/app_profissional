@@ -109,67 +109,69 @@ class _HomeState extends State<Home> {
           ),
         ),
       ),
-      drawer: Drawer(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.only(top: 100, left: 20, bottom: 20),
-              color: Cores.laranjaSuave,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.person,
-                    color: Cores.azul,
-                    size: 80,
-                  ),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  Text(
-                    "Profissional",
-                    style: TextStyle(
-                        fontSize: 32,
-                        //fontWeight: FontWeight.bold,
-                        color: Cores.azul),
-                  ),
-                ],
+      drawer: SafeArea(
+        child: Drawer(
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.only(top: 100, left: 20, bottom: 20),
+                color: Cores.laranjaSuave,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.person,
+                      color: Cores.azul,
+                      size: 80,
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      "Profissional",
+                      style: TextStyle(
+                          fontSize: 32,
+                          //fontWeight: FontWeight.bold,
+                          color: Cores.azul),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  _buildDrawerItem(Icons.edit, "Editar perfil", "perfilPage"),
-                  _buildDrawerItem(Icons.thumb_up, "Siga-nos", ""),
-                  _buildDrawerItem(Icons.chat, "Suporte", ""),
-                ],
+              const SizedBox(
+                height: 20,
               ),
-            ),
-            const Divider(),
-            ListTile(
-              leading: Icon(
-                Icons.exit_to_app,
-                color: Cores.azul,
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    _buildDrawerItem(Icons.edit, "Editar perfil", "perfilPage"),
+                    _buildDrawerItem(Icons.thumb_up, "Siga-nos", ""),
+                    _buildDrawerItem(Icons.chat, "Suporte", ""),
+                  ],
+                ),
               ),
-              title: Text(
-                "Sair",
-                style: TextStyle(color: Cores.azul),
+              const Divider(),
+              ListTile(
+                leading: Icon(
+                  Icons.exit_to_app,
+                  color: Cores.azul,
+                ),
+                title: Text(
+                  "Sair",
+                  style: TextStyle(color: Cores.azul),
+                ),
+                onTap: () async {
+                  await AuthService().logout();
+                  if (context.mounted) {
+                    Navigator.pushReplacementNamed(context, '/loginPage');
+                  }
+                },
               ),
-              onTap: () async {
-                await AuthService().logout();
-                if (context.mounted) {
-                  Navigator.pushReplacementNamed(context, '/loginPage');
-                }
-              },
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-          ],
+              const SizedBox(
+                height: 20,
+              ),
+            ],
+          ),
         ),
       ),
       body: Column(
