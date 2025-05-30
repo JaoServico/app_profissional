@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:jao_servico_profissional/controllers/perfil_controller.dart';
 import 'package:jao_servico_profissional/models/perfil_model.dart';
 import 'package:jao_servico_profissional/models/rodape.dart';
@@ -21,6 +25,8 @@ class _PerfilPageState extends State<PerfilPage> {
 
   final nomeController = TextEditingController();
   final detalhesController = TextEditingController();
+  String _fotoUrl = '';
+  File? _imagemSelecionada;
 
   @override
   void initState() {
@@ -33,8 +39,9 @@ class _PerfilPageState extends State<PerfilPage> {
     final perfil = await _controller.carregarPerfil(uid);
     if (perfil != null) {
       setState(() {
-        nomeController.text = perfil.nome!;
-        detalhesController.text = perfil.detalhes!;
+        nomeController.text = perfil.nome ?? '';
+        detalhesController.text = perfil.detalhes ?? '';
+        _fotoUrl = perfil.fotoUrl!;
       });
     }
   }
@@ -43,16 +50,19 @@ class _PerfilPageState extends State<PerfilPage> {
     if (_formkey.currentState!.validate()) {
       try {
         final uid = FirebaseAuth.instance.currentUser!.uid;
+
+        String fotoUrl = _fotoUrl;
         final perfil = PerfilModel(
           nome: nomeController.text,
           detalhes: detalhesController.text,
-          fotoUrl: '',
+          fotoUrl: fotoUrl,
         );
 
         await _controller.salvarPerfil(uid, perfil);
 
         setState(() {
           _isEditing = false;
+          _fotoUrl = fotoUrl;
         });
 
         if (!context.mounted) return;
@@ -65,6 +75,18 @@ class _PerfilPageState extends State<PerfilPage> {
           SnackBar(content: Text('Erro ao salvar o perfil: $e')),
         );
       }
+    }
+  }
+
+  Future<void> selecionarImagem() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imagemSelecionada = File(pickedFile.path);
+      });
+    } else {
+      debugPrint('Nenhuma imagem selecionada');
     }
   }
 
@@ -110,8 +132,14 @@ class _PerfilPageState extends State<PerfilPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.rectangle,
                       borderRadius: BorderRadius.circular(15),
-                      image: const DecorationImage(
-                          image: AssetImage('assets/profissional.png'),
+                      image: DecorationImage(
+                          image: _imagemSelecionada != null
+                              ? FileImage(_imagemSelecionada!)
+                              : (_fotoUrl.isNotEmpty
+                                      ? NetworkImage(_fotoUrl)
+                                      : const AssetImage(
+                                          'assets/profissional.png'))
+                                  as ImageProvider,
                           fit: BoxFit.cover),
                     ),
                   ),
@@ -119,7 +147,9 @@ class _PerfilPageState extends State<PerfilPage> {
                     height: 10,
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      selecionarImagem;
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           vertical: 6, horizontal: 12),
