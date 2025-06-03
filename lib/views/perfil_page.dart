@@ -1,9 +1,7 @@
 import 'dart:io';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jao_servico_profissional/controllers/perfil_controller.dart';
 import 'package:jao_servico_profissional/models/perfil_model.dart';
@@ -41,7 +39,7 @@ class _PerfilPageState extends State<PerfilPage> {
       setState(() {
         nomeController.text = perfil.nome ?? '';
         detalhesController.text = perfil.detalhes ?? '';
-        _fotoUrl = perfil.fotoUrl!;
+        _fotoUrl = perfil.fotoUrl ?? '';
       });
     }
   }
@@ -79,14 +77,33 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   Future<void> selecionarImagem() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    try {
+      final picker = ImagePicker();
+      final imagem = await picker.pickImage(source: ImageSource.gallery);
+
+      if (imagem == null) return;
+
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      final referencia = FirebaseStorage.instance.ref('fotos_perfil/$uid.jpg');
+
+      await referencia.putFile(File(imagem.path));
+      final url = await referencia.getDownloadURL();
+
+      await _controller.atualizarFoto(uid, url);
+
       setState(() {
-        _imagemSelecionada = File(pickedFile.path);
+        _fotoUrl = url;
       });
-    } else {
-      debugPrint('Nenhuma imagem selecionada');
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto alterada com sucesso')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao alterar a imagem: $e')),
+      );
     }
   }
 
@@ -135,10 +152,7 @@ class _PerfilPageState extends State<PerfilPage> {
                       image: DecorationImage(
                           image: _imagemSelecionada != null
                               ? FileImage(_imagemSelecionada!)
-                              : (_fotoUrl.isNotEmpty
-                                      ? NetworkImage(_fotoUrl)
-                                      : const AssetImage(
-                                          'assets/profissional.png'))
+                              : const AssetImage('assets/profissional.png')
                                   as ImageProvider,
                           fit: BoxFit.cover),
                     ),
@@ -147,9 +161,7 @@ class _PerfilPageState extends State<PerfilPage> {
                     height: 10,
                   ),
                   GestureDetector(
-                    onTap: () {
-                      selecionarImagem;
-                    },
+                    onTap: selecionarImagem,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           vertical: 6, horizontal: 12),

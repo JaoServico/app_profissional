@@ -17,4 +17,13 @@ class PerfilRepository {
         .doc(uid)
         .set(perfil.toMap(), SetOptions(merge: true));
   }
+
+  Future<void> atualizarFotoUrl(String uid, String url) async {
+    await FirebaseFirestore.instance
+        .collection('profissionais')
+        .doc(uid)
+        .update({
+      'fotoUrl': url,
+    });
+  }
 }
