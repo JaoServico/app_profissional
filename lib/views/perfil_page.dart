@@ -1,6 +1,6 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jao_servico_profissional/controllers/perfil_controller.dart';
@@ -20,10 +20,11 @@ class _PerfilPageState extends State<PerfilPage> {
   final _formkey = GlobalKey<FormState>();
   final _controller = PerfilController(repository: PerfilRepository());
   bool _isEditing = false;
+  bool _isLoading = true;
 
   final nomeController = TextEditingController();
   final detalhesController = TextEditingController();
-  String _fotoUrl = '';
+  String? _fotoUrl;
   File? _imagemSelecionada;
 
   @override
@@ -33,34 +34,33 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   Future<void> carregarPerfil() async {
+    setState(() => _isLoading = true);
     final uid = FirebaseAuth.instance.currentUser!.uid;
     final perfil = await _controller.carregarPerfil(uid);
     if (perfil != null) {
       setState(() {
-        nomeController.text = perfil.nome ?? '';
-        detalhesController.text = perfil.detalhes ?? '';
-        _fotoUrl = perfil.fotoUrl ?? '';
+        nomeController.text = perfil.nome!;
+        detalhesController.text = perfil.detalhes!;
+        _fotoUrl = perfil.fotoUrl;
       });
     }
+    setState(() => _isLoading = false);
   }
 
   Future<void> salvarPerfil() async {
     if (_formkey.currentState!.validate()) {
       try {
         final uid = FirebaseAuth.instance.currentUser!.uid;
-
-        String fotoUrl = _fotoUrl;
         final perfil = PerfilModel(
           nome: nomeController.text,
           detalhes: detalhesController.text,
-          fotoUrl: fotoUrl,
+          fotoUrl: _fotoUrl ?? '',
         );
 
         await _controller.salvarPerfil(uid, perfil);
 
         setState(() {
           _isEditing = false;
-          _fotoUrl = fotoUrl;
         });
 
         if (!context.mounted) return;
@@ -77,33 +77,32 @@ class _PerfilPageState extends State<PerfilPage> {
   }
 
   Future<void> selecionarImagem() async {
-    try {
-      final picker = ImagePicker();
-      final imagem = await picker.pickImage(source: ImageSource.gallery);
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-      if (imagem == null) return;
-
-      final uid = FirebaseAuth.instance.currentUser!.uid;
-      final referencia = FirebaseStorage.instance.ref('fotos_perfil/$uid.jpg');
-
-      await referencia.putFile(File(imagem.path));
-      final url = await referencia.getDownloadURL();
-
-      await _controller.atualizarFoto(uid, url);
-
+    if (pickedFile != null) {
       setState(() {
-        _fotoUrl = url;
+        _imagemSelecionada = File(pickedFile.path);
       });
 
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Foto alterada com sucesso')),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao alterar a imagem: $e')),
-      );
+      try {
+        final uid = FirebaseAuth.instance.currentUser!.uid;
+        final url = await _controller.uploadFotoPerfil(uid, _imagemSelecionada!);
+
+        setState(() {
+          _fotoUrl = url;
+        });
+
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto atualizada com sucesso')),
+        );
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao atualizar a foto: $e')),
+        );
+      }
     }
   }
 
@@ -112,161 +111,153 @@ class _PerfilPageState extends State<PerfilPage> {
     return Scaffold(
       backgroundColor: Cores.laranjaMuitoSuave,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: _formkey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // const SizedBox(
-                  //   height: 40,
-                  // ),
-                  Text(
-                    "Perfil",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Cores.azul,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  const Text(
-                    "Aqui você consegue acessar e editar suas informações",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Cores.preto),
-                  ),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  //Foto de Perfil
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(15),
-                      image: DecorationImage(
-                          image: _imagemSelecionada != null
-                              ? FileImage(_imagemSelecionada!)
-                              : const AssetImage('assets/profissional.png')
-                                  as ImageProvider,
-                          fit: BoxFit.cover),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  GestureDetector(
-                    onTap: selecionarImagem,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 6, horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Cores.azul.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.add_a_photo,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formkey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Perfil",
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
                             color: Cores.azul,
-                            size: 18,
-                          ),
-                          const SizedBox(
-                            width: 8,
-                          ),
-                          Text(
-                            "Alterar imagem",
-                            style: TextStyle(color: Cores.azul, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/contatos'),
-                        child: _buildPerfilIcone(Icons.people, "Contatos \n"),
-                      ),
-                      GestureDetector(
-                          onTap: () =>
-                              Navigator.pushNamed(context, '/certificados'),
-                          child: _buildPerfilIcone(
-                              Icons.school, "Certificados\nFormações")),
-                      GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/cidades'),
-                        child: _buildPerfilIcone(
-                            Icons.location_on, "Cidades \n de atuação"),
-                      ),
-                      GestureDetector(
-                          onTap: () =>
-                              Navigator.pushNamed(context, '/negocios'),
-                          child: _buildPerfilIcone(
-                              Icons.business_center, "Negócios\n")),
-                      GestureDetector(
-                          onTap: () =>
-                              Navigator.pushNamed(context, '/habilidades'),
-                          child:
-                              _buildPerfilIcone(Icons.star, "Habilidades\n")),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  //Formulário de informações
-                  _buildTextField("Nome", nomeController),
-                  _buildTextField("Detalhes", detalhesController),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_isEditing) {
-                              salvarPerfil();
-                            }
-                            setState(() => _isEditing = !_isEditing);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Cores.laranja,
-                            side: BorderSide(
-                              color: Cores.azul,
-                              width: 2,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 32, vertical: 12),
-                          ),
-                          child: Text(
-                            _isEditing ? "Concluir" : "Editar",
-                            style: TextStyle(color: Cores.azul, fontSize: 18),
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 10),
+                        const Text(
+                          "Aqui você consegue acessar e editar suas informações",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16, color: Cores.preto),
+                        ),
+                        const SizedBox(height: 30),
+                        // Foto de perfil
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.rectangle,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: _imagemSelecionada != null
+                                ? Image.file(_imagemSelecionada!, fit: BoxFit.cover)
+                                : (_fotoUrl != null && _fotoUrl!.isNotEmpty
+                                    ? CachedNetworkImage(
+                                        imageUrl: _fotoUrl!,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            const Center(child: CircularProgressIndicator()),
+                                        errorWidget: (context, url, error) =>
+                                            const Icon(Icons.error),
+                                      )
+                                    : Image.asset('assets/profissional.png', fit: BoxFit.cover)),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        GestureDetector(
+                          onTap: _isEditing ? selecionarImagem : null,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 6, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: _isEditing
+                                  ? Cores.azul.withOpacity(0.1)
+                                  : Cores.azul.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.add_a_photo,
+                                  color: Cores.azul,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Alterar imagem",
+                                  style: TextStyle(
+                                    color: Cores.azul,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        // Carrossel de ícones
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            GestureDetector(
+                              onTap: () => Navigator.pushNamed(context, '/contatos'),
+                              child: _buildPerfilIcone(Icons.people, "Contatos \n"),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.pushNamed(context, '/certificados'),
+                              child: _buildPerfilIcone(Icons.school, "Certificados\nFormações"),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.pushNamed(context, '/cidades'),
+                              child: _buildPerfilIcone(Icons.location_on, "Cidades \n de atuação"),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.pushNamed(context, '/negocios'),
+                              child: _buildPerfilIcone(Icons.business_center, "Negócios\n"),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.pushNamed(context, '/habilidades'),
+                              child: _buildPerfilIcone(Icons.star, "Habilidades\n"),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        // Formulário
+                        _buildTextField("Nome", nomeController),
+                        _buildTextField("Detalhes", detalhesController),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (_isEditing) {
+                                    salvarPerfil();
+                                  }
+                                  setState(() => _isEditing = !_isEditing);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Cores.laranja,
+                                  side: BorderSide(color: Cores.azul, width: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 32, vertical: 12),
+                                ),
+                                child: Text(
+                                  _isEditing ? "Concluir" : "Editar",
+                                  style: TextStyle(color: Cores.azul, fontSize: 18),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ),
       ),
       bottomNavigationBar: const Rodape(),
     );
   }
 
-  //Funcao prar criar o carrossel de itens
   Widget _buildPerfilIcone(IconData icone, String texto) {
     return Column(
       children: [
@@ -277,35 +268,24 @@ class _PerfilPageState extends State<PerfilPage> {
             color: Cores.azul.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icone,
-            color: Cores.azul,
-            size: 30,
-          ),
+          child: Icon(icone, color: Cores.azul, size: 30),
         ),
         const SizedBox(height: 4),
         Text(
           texto,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Cores.azul,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Cores.azul, fontSize: 12),
         ),
       ],
     );
   }
 
-  //Funcao para os TextFields
-  Widget _buildTextField(
-    String label,
-    TextEditingController controller,
-  ) {
+  Widget _buildTextField(String label, TextEditingController controller) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextFormField(
         controller: controller,
-        readOnly: !_isEditing, // Desbloqueia quando esta no modo de edicao
+        readOnly: !_isEditing,
         decoration: InputDecoration(
           labelText: label,
           filled: true,
