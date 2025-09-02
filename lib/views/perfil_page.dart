@@ -51,16 +51,27 @@ class _PerfilPageState extends State<PerfilPage> {
     if (_formkey.currentState!.validate()) {
       try {
         final uid = FirebaseAuth.instance.currentUser!.uid;
+
+        String? fotoUrl = _fotoUrl;
+
+        //Se o usuário selecionou nova imagem, faz upload
+        if (_imagemSelecionada != null) {
+          fotoUrl =
+              await _controller.uploadFotoPerfil(uid, _imagemSelecionada!);
+        }
+
         final perfil = PerfilModel(
           nome: nomeController.text,
           detalhes: detalhesController.text,
-          fotoUrl: _fotoUrl ?? '',
+          fotoUrl: fotoUrl ?? '',
         );
 
         await _controller.salvarPerfil(uid, perfil);
 
         setState(() {
           _isEditing = false;
+          _fotoUrl = fotoUrl; //atualiza o preview
+          _imagemSelecionada = null; //limpa a seleção local
         });
 
         if (!context.mounted) return;
@@ -84,25 +95,6 @@ class _PerfilPageState extends State<PerfilPage> {
       setState(() {
         _imagemSelecionada = File(pickedFile.path);
       });
-
-      try {
-        final uid = FirebaseAuth.instance.currentUser!.uid;
-        final url = await _controller.uploadFotoPerfil(uid, _imagemSelecionada!);
-
-        setState(() {
-          _fotoUrl = url;
-        });
-
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foto atualizada com sucesso')),
-        );
-      } catch (e) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao atualizar a foto: $e')),
-        );
-      }
     }
   }
 
@@ -147,17 +139,21 @@ class _PerfilPageState extends State<PerfilPage> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(15),
                             child: _imagemSelecionada != null
-                                ? Image.file(_imagemSelecionada!, fit: BoxFit.cover)
+                                ? Image.file(_imagemSelecionada!,
+                                    fit: BoxFit.cover)
                                 : (_fotoUrl != null && _fotoUrl!.isNotEmpty
                                     ? CachedNetworkImage(
                                         imageUrl: _fotoUrl!,
                                         fit: BoxFit.cover,
                                         placeholder: (context, url) =>
-                                            const Center(child: CircularProgressIndicator()),
+                                            const Center(
+                                                child:
+                                                    CircularProgressIndicator()),
                                         errorWidget: (context, url, error) =>
                                             const Icon(Icons.error),
                                       )
-                                    : Image.asset('assets/profissional.png', fit: BoxFit.cover)),
+                                    : Image.asset('assets/profissional.png',
+                                        fit: BoxFit.cover)),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -198,24 +194,34 @@ class _PerfilPageState extends State<PerfilPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, '/contatos'),
-                              child: _buildPerfilIcone(Icons.people, "Contatos \n"),
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/contatos'),
+                              child: _buildPerfilIcone(
+                                  Icons.people, "Contatos \n"),
                             ),
                             GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, '/certificados'),
-                              child: _buildPerfilIcone(Icons.school, "Certificados\nFormações"),
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/certificados'),
+                              child: _buildPerfilIcone(
+                                  Icons.school, "Certificados\nFormações"),
                             ),
                             GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, '/cidades'),
-                              child: _buildPerfilIcone(Icons.location_on, "Cidades \n de atuação"),
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/cidades'),
+                              child: _buildPerfilIcone(
+                                  Icons.location_on, "Cidades \n de atuação"),
                             ),
                             GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, '/negocios'),
-                              child: _buildPerfilIcone(Icons.business_center, "Negócios\n"),
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/negocios'),
+                              child: _buildPerfilIcone(
+                                  Icons.business_center, "Negócios\n"),
                             ),
                             GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, '/habilidades'),
-                              child: _buildPerfilIcone(Icons.star, "Habilidades\n"),
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/habilidades'),
+                              child: _buildPerfilIcone(
+                                  Icons.star, "Habilidades\n"),
                             ),
                           ],
                         ),
@@ -241,8 +247,9 @@ class _PerfilPageState extends State<PerfilPage> {
                                       horizontal: 32, vertical: 12),
                                 ),
                                 child: Text(
-                                  _isEditing ? "Concluir" : "Editar",
-                                  style: TextStyle(color: Cores.azul, fontSize: 18),
+                                  _isEditing ? "Salvar" : "Editar",
+                                  style: TextStyle(
+                                      color: Cores.azul, fontSize: 18),
                                 ),
                               ),
                             ),
