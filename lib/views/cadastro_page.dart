@@ -53,29 +53,26 @@ class _CadastroPageState extends State<CadastroPage> {
 
   //Funcão de cadastro
   Future<void> _cadastrar() async {
-    if (_formkey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      final sucesso = await AuthService()
-          .signUp(email: _emailController.text, senha: _senhaController.text);
+  if (!_formkey.currentState!.validate()) return;
 
-      setState(() => _isLoading = false);
+  setState(() => _isLoading = true);
+  final erro = await AuthService()
+      .signUp(email: _emailController.text, senha: _senhaController.text);
 
-      if (sucesso) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Cadastro realizado com sucesso!"),
-          ),
-        );
-        Navigator.pushNamed(context, '/loginPage');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Erro ao registrar."),
-          ),
-        );
-      }
-    }
+  if (!mounted) return;
+  setState(() => _isLoading = false);
+
+  if (erro == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cadastro realizado com sucesso!')),
+    );
+    Navigator.pushReplacementNamed(context, '/loginPage');
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(erro)),
+    );
   }
+}
 
   @override
   void dispose() {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:jao_servico_profissional/controllers/cidade_controller.dart';
+import 'package:jao_servico_profissional/repositories/cidade_repository.dart';
 import 'package:jao_servico_profissional/views/cadastro_page.dart';
 import 'package:jao_servico_profissional/views/certificados.dart';
 import 'package:jao_servico_profissional/views/cidades.dart';
@@ -10,6 +12,7 @@ import 'package:jao_servico_profissional/views/negocios.dart';
 import 'package:jao_servico_profissional/views/perfil_page.dart';
 import 'package:jao_servico_profissional/views/contatos.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -45,7 +48,10 @@ class MyApp extends StatelessWidget {
         '/contatos': (context) => const ContatosPage(),
         '/certificados': (context) => const CertificadosPage(),
         '/habilidades': (context) => const HabilidadesPage(),
-        '/cidades': (context) => const CidadesPage(),
+        '/cidades': (context) => ChangeNotifierProvider(
+              create: (_) => CidadeController( repository: CidadeRepository()),
+              child: const CidadesPage(),
+            ),
         '/negocios': (context) => const NegociosPage(),
         '/': (context) => const Home(),
       },

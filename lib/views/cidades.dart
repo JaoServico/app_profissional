@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jao_servico_profissional/cores.dart';
+import 'package:provider/provider.dart';
+import '../controllers/cidade_controller.dart';
+import '../cores.dart';
 
 class CidadesPage extends StatefulWidget {
   const CidadesPage({super.key});
@@ -9,115 +11,104 @@ class CidadesPage extends StatefulWidget {
 }
 
 class _CidadesPageState extends State<CidadesPage> {
-  final LayerLink _layerLink =
-      LayerLink(); //Usado prar posicionar o dropdown ao campo
-  final TextEditingController _searchController =
-      TextEditingController(); //Controla o texto digitado
-  final FocusNode _focusNode = FocusNode(); //Controla o foco do Textfield
-
-  //Lista de cidades disponiveis
-  final List<String> todasCidades = [
-    'Tupã',
-    'Herculândia',
-    'Iacri',
-    'Bastos',
-    'Marilia',
-    'Oriente',
-    'Parnaso',
-  ];
-
-  //Cidades filtradas (com na base na busca)
-  List<String> cidadesFiltradas = [];
-
-  //Cidades que o usuário selecionou
-  List<String> cidadesSelecionadas = [];
-
-  //Referencia que o usuário selecionou
+  final LayerLink _layerLink = LayerLink();
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   OverlayEntry? _dropdownOverlay;
 
   @override
   void initState() {
     super.initState();
-    //Listener que mostra ou esconde o dropwdown dependendo do foco
+
+    // Inicializa controller e carrega cidades
+    final controller = context.read<CidadeController>();
+    Future.microtask(() => controller.init());
+
+    // Listener para mostrar/ocultar dropdown
     _focusNode.addListener(() {
       if (_focusNode.hasFocus) {
-        _mostrarDropdown();
+        _showDropdown();
       } else {
-        _removerDropdown();
+        _removeDropdown();
       }
     });
   }
 
   @override
   void dispose() {
-    //Remove e limpa tudo ao sair da tela
-    _removerDropdown();
+    _removeDropdown();
     _searchController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
-  void _mostrarDropdown() {
-    _removerDropdown(); //Garante que não exista outro overlay antes
-    cidadesFiltradas = todasCidades; //Mostra tudo inicialmente
-    _dropdownOverlay = _criarDropdownOverlay(); //Criar overlay
-    Overlay.of(context).insert(_dropdownOverlay!); //Insere na tela
+  void _showDropdown() {
+    _removeDropdown();
+    _dropdownOverlay = _createDropdownOverlay();
+    Overlay.of(context).insert(_dropdownOverlay!);
   }
 
-  void _removerDropdown() {
-    _dropdownOverlay?.remove(); //Remove da tela
+  void _removeDropdown() {
+    _dropdownOverlay?.remove();
     _dropdownOverlay = null;
   }
 
-  void _atualizarFiltro(String texto) {
-    // Filtra a lista com base no texto
-    setState(() {
-      cidadesFiltradas = todasCidades
-          .where((hab) => hab.toLowerCase().contains(texto.toLowerCase()))
-          .toList();
-    });
-
-    // Atualiza o dropdown se já estiver visível
+  void _updateFilter(String text) {
+    setState(() {}); // rebuild para filtrar lista
     if (_dropdownOverlay != null) {
-      _removerDropdown();
-      _dropdownOverlay = _criarDropdownOverlay();
+      _removeDropdown();
+      _dropdownOverlay = _createDropdownOverlay();
       Overlay.of(context).insert(_dropdownOverlay!);
     }
   }
 
-  OverlayEntry _criarDropdownOverlay() {
-    RenderBox renderBox = context.findRenderObject() as RenderBox;
-    final size = renderBox.size;
+  OverlayEntry _createDropdownOverlay() {
+    final controller = context.read<CidadeController>();
+    final size = context.size ?? Size.zero;
+
+    final filter = _searchController.text.toLowerCase();
+    final filteredCidades = controller.cidadesDisponiveis
+        .where((c) => c.toLowerCase().contains(filter))
+        .toList();
 
     return OverlayEntry(
       builder: (context) => Positioned(
-        width: size.width - 40, //Largura do dropdown alinhada ao TextField
+        width: size.width - 40,
         child: CompositedTransformFollower(
-          link: _layerLink, //Liga ao Texfield
+          link: _layerLink,
           showWhenUnlinked: false,
-          offset: const Offset(0, 60), //Distancia do TextField
+          offset: const Offset(0, 60),
           child: Material(
             elevation: 2,
             borderRadius: BorderRadius.circular(8),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: cidadesFiltradas.length,
-              itemBuilder: (context, index) {
-                final cidade = cidadesFiltradas[index];
-                return ListTile(
-                  title: Text(cidade),
-                  onTap: () {
-                    setState(() {
-                      if (!cidadesSelecionadas.contains(cidade)) {
-                        cidadesSelecionadas.add(cidade); //Adiciona
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: filteredCidades.length,
+                itemBuilder: (context, index) {
+                  final cidade = filteredCidades[index];
+                  final isSelected = controller.cidadesSelecionadas
+                      .any((c) => c.nome == cidade);
+
+                  return ListTile(
+                    title: Text(cidade),
+                    trailing: isSelected
+                        ? const Icon(Icons.check, color: Colors.green)
+                        : null,
+                    onTap: () {
+                      if (isSelected) {
+                        controller.removerCidade(cidade);
+                      } else {
+                        controller.adicionarCidade(cidade);
                       }
-                      _searchController.clear(); //Limpa o campo
-                      _removerDropdown(); //Fecha o dropdown
-                      _focusNode.unfocus(); //Remove o foco
-                    });
-                  },
-                );
-              },
+                      _searchController.clear();
+                      _removeDropdown();
+                      _focusNode.unfocus();
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -127,127 +118,125 @@ class _CidadesPageState extends State<CidadesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        _focusNode.unfocus(); //Tira o foco ao tocar fora
-      },
-      child: Scaffold(
-        backgroundColor: Cores.laranjaMuitoSuave,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                Text(
-                  'Cidades de atuação',
-                  style: TextStyle(
-                    color: Cores.azul,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Adicione e edite aqui suas cidades de atuação',
-                  style: TextStyle(
-                    color: Cores.preto,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                CompositedTransformTarget(
-                  link: _layerLink,
-                  child: TextField(
-                    controller: _searchController,
-                    focusNode: _focusNode,
-                    onChanged: _atualizarFiltro, //Filtra ao digitar
-                    decoration: InputDecoration(
-                      labelText: 'Buscar cidade',
-                      filled: true,
-                      fillColor: Colors.white,
-                      //labelStyle: const TextStyle(color: Color(0xFF09189F)),
-                      enabledBorder: OutlineInputBorder(
-                        //borderSide: const BorderSide(color: Color(0xFF09189F)),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: cidadesSelecionadas
-                      .map(
-                        (hab) => Chip(
-                          label: Text(hab),
-                          backgroundColor: Cores.laranjaSuave,
-                          labelStyle: TextStyle(color: Cores.azul),
-                          deleteIconColor: Cores.azul,
-                          onDeleted: () {
-                            setState(() {
-                              cidadesSelecionadas.remove(hab);
-                            });
-                          },
-                        ),
-                      )
-                      .toList(),
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Consumer<CidadeController>(
+      builder: (context, controller, _) {
+        if (controller.isLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return GestureDetector(
+          onTap: () => _focusNode.unfocus(),
+          child: Scaffold(
+            backgroundColor: Cores.laranjaMuitoSuave,
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
                   children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          //Salvar dados no firestore
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Cores.laranja,
-                          side: BorderSide(color: Cores.azul, width: 2),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 32, vertical: 12),
-                        ),
-                        child: Text(
-                          "Salvar",
-                          style: TextStyle(
-                            color: Cores.azul,
-                            fontSize: 16,
+                    Text(
+                      'Cidades de atuação',
+                      style: TextStyle(
+                        color: Cores.azul,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Adicione e edite aqui suas cidades de atuação',
+                      style: TextStyle(color: Cores.preto, fontSize: 16),
+                    ),
+                    const SizedBox(height: 20),
+                    CompositedTransformTarget(
+                      link: _layerLink,
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _focusNode,
+                        onChanged: _updateFilter,
+                        decoration: InputDecoration(
+                          labelText: 'Buscar cidade',
+                          filled: true,
+                          fillColor: Colors.white,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(
-                      width: 20,
+                    const SizedBox(height: 20),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: controller.cidadesSelecionadas
+                          .map(
+                            (c) => Chip(
+                              label: Text(c.nome),
+                              backgroundColor: Cores.laranjaSuave,
+                              labelStyle: TextStyle(color: Cores.azul),
+                              deleteIconColor: Cores.azul,
+                              onDeleted: () =>
+                                  controller.removerCidade(c.nome),
+                            ),
+                          )
+                          .toList(),
                     ),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Cores.branco,
-                          side: BorderSide(color: Cores.azul, width: 2),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 32, vertical: 12),
-                        ),
-                        child: Text(
-                          "Voltar",
-                          style: TextStyle(
-                            color: Cores.azul,
-                            fontSize: 16,
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await controller.salvarCidades();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Cidades salvas com sucesso!')),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Cores.laranja,
+                              side: BorderSide(color: Cores.azul, width: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 32),
+                            ),
+                            child: Text(
+                              "Salvar",
+                              style:
+                                  TextStyle(color: Cores.azul, fontSize: 16),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Cores.branco,
+                              side: BorderSide(color: Cores.azul, width: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 32),
+                            ),
+                            child: Text(
+                              "Voltar",
+                              style:
+                                  TextStyle(color: Cores.azul, fontSize: 16),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
