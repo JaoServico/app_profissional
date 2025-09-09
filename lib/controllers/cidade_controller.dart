@@ -14,18 +14,22 @@ class CidadeController extends ChangeNotifier {
 
   final uid = FirebaseAuth.instance.currentUser!.uid;
 
-  // Carrega cidades do usuário + cidades disponíveis da API
+  // Inicializa o controller: carrega cidades do usuário e cidades da API
   Future<void> init() async {
     isLoading = true;
     notifyListeners();
 
+    // Carrega cidades do Firestore (subcoleção)
     cidadesSelecionadas = await repository.carregarCidades(uid);
+
+    // Carrega cidades disponíveis da API
     cidadesDisponiveis = await repository.buscarCidadesSP();
 
     isLoading = false;
     notifyListeners();
   }
 
+  // Adiciona cidade à lista de selecionadas
   void adicionarCidade(String nome) {
     if (!cidadesSelecionadas.any((c) => c.nome == nome)) {
       cidadesSelecionadas.add(CidadeModel(nome: nome));
@@ -33,11 +37,13 @@ class CidadeController extends ChangeNotifier {
     }
   }
 
+  // Remove cidade da lista de selecionadas
   void removerCidade(String nome) {
     cidadesSelecionadas.removeWhere((c) => c.nome == nome);
     notifyListeners();
   }
 
+  // Salva cidades selecionadas no Firestore (subcoleção)
   Future<void> salvarCidades() async {
     await repository.salvarCidades(uid, cidadesSelecionadas);
   }

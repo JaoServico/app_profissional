@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:jao_servico_profissional/cores.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import '../controllers/contatos_controller.dart';
+import '../models/contato_model.dart';
+import '../cores.dart';
 
 class ContatosPage extends StatefulWidget {
   const ContatosPage({super.key});
@@ -19,108 +24,150 @@ class _ContatosPageState extends State<ContatosPage> {
   final TextEditingController linkedinController = TextEditingController();
   final TextEditingController siteController = TextEditingController();
 
+  final whatsappMask = MaskTextInputFormatter(mask: '(##) #####-####');
+  final telefoneMask = MaskTextInputFormatter(mask: '(##) ####-####');
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      final controller = context.read<ContatosController>();
+      await controller.carregarContatos();
+      _preencherCampos(controller.contatos);
+    });
+  }
+
+  void _preencherCampos(ContatoModel c) {
+    whatsappController.text = c.whatsapp;
+    telefoneController.text = c.telefone;
+    emailController.text = c.email;
+    facebookController.text = c.facebook;
+    instagramController.text = c.instagram;
+    linkedinController.text = c.linkedin;
+    siteController.text = c.site;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final controller = context.watch<ContatosController>();
+
     return Scaffold(
       backgroundColor: Cores.laranjaMuitoSuave,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                "Contatos",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Cores.azul,
-                ),
-              ),
-              const SizedBox(
-                height: 8,
-              ),
-              const Text(
-                "Cadastre e edite seus contatos e redes sociais aqui",
-                style: TextStyle(
-                  fontSize: 16,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              _buildTextField("Whatsapp", whatsappController),
-              _buildTextField("Telefone", telefoneController),
-              _buildTextField("Email", emailController),
-              _buildTextField("Facebook", facebookController),
-              _buildTextField("Instagram", instagramController),
-              _buildTextField("Linkedin", linkedinController),
-              _buildTextField("Site", siteController),
-              const SizedBox(
-                height: 30,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          editando = !editando;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Cores.laranja,
-                        side: BorderSide(color: Cores.azul, width: 2),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 12),
-                      ),
-                      child: Text(
-                        editando ? "Concluir" : "Editar",
-                        style: TextStyle(
-                          color: Cores.azul,
-                          fontSize: 16,
-                        ),
+        child: controller.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Contatos",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Cores.azul,
                       ),
                     ),
-                  ),
-                  const SizedBox(
-                    width: 20,
-                  ),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Cores.branco,
-                        side: BorderSide(color: Cores.azul, width: 2),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 12),
-                      ),
-                      child: Text(
-                        "Voltar",
-                        style: TextStyle(
-                          color: Cores.azul,
-                          fontSize: 16,
-                        ),
-                      ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Cadastre e edite seus contatos e redes sociais aqui",
+                      style: TextStyle(fontSize: 16),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 30),
+                    _buildTextField("Whatsapp", whatsappController,
+                        inputFormatters: [whatsappMask]),
+                    _buildTextField("Telefone", telefoneController,
+                        inputFormatters: [telefoneMask]),
+                    _buildTextField("Email", emailController),
+                    _buildTextField("Facebook", facebookController),
+                    _buildTextField("Instagram", instagramController),
+                    _buildTextField("Linkedin", linkedinController),
+                    _buildTextField("Site", siteController),
+                    const SizedBox(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (editando) {
+                                final novo = ContatoModel(
+                                  whatsapp: whatsappController.text,
+                                  telefone: telefoneController.text,
+                                  email: emailController.text,
+                                  facebook: facebookController.text,
+                                  instagram: instagramController.text,
+                                  linkedin: linkedinController.text,
+                                  site: siteController.text,
+                                );
+
+                                controller.atualizarContatos(novo);
+                                final sucesso =
+                                    await controller.salvarContatos();
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(sucesso
+                                        ? "Contatos salvos com sucesso!"
+                                        : "Erro ao salvar contatos."),
+                                  ),
+                                );
+                              }
+                              setState(() => editando = !editando);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Cores.laranja,
+                              side: BorderSide(color: Cores.azul, width: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 12),
+                            ),
+                            child: Text(
+                              editando ? "Concluir" : "Editar",
+                              style: TextStyle(
+                                color: Cores.azul,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Cores.branco,
+                              side: BorderSide(color: Cores.azul, width: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 12),
+                            ),
+                            child: Text(
+                              "Voltar",
+                              style: TextStyle(
+                                color: Cores.azul,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      {List<TextInputFormatter>? inputFormatters}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextField(
         enabled: editando,
         controller: controller,
+        inputFormatters: inputFormatters,
         decoration: InputDecoration(
           labelText: label,
           filled: true,

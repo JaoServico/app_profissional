@@ -6,22 +6,30 @@ import '../models/cidade_model.dart';
 class CidadeRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Salva cidades selecionadas do usuário
+  // Salva cidades selecionadas do usuário em subcoleção 'cidades'
   Future<void> salvarCidades(String uid, List<CidadeModel> cidades) async {
-    final cidadesMap = cidades.map((c) => c.toMap()).toList();
-    await _firestore.collection('profissionais').doc(uid).set({
-      'cidades': cidadesMap,
-    }, SetOptions(merge: true));
+    final cidadesCollection =
+        _firestore.collection('profissionais').doc(uid).collection('cidades');
+
+    // Primeiro, removemos os documentos existentes para evitar duplicidade
+    final snapshot = await cidadesCollection.get();
+    for (final doc in snapshot.docs) {
+      await doc.reference.delete();
+    }
+
+    // Agora adicionamos cada cidade como um novo documento
+    for (final cidade in cidades) {
+      await cidadesCollection.add(cidade.toMap());
+    }
   }
 
-  // Carrega cidades selecionadas do usuário
+  // Carrega cidades selecionadas do usuário da subcoleção
   Future<List<CidadeModel>> carregarCidades(String uid) async {
-    final doc = await _firestore.collection('profissionais').doc(uid).get();
-    if (doc.exists && doc.data()?['cidades'] != null) {
-      final List data = doc.data()!['cidades'];
-      return data.map((c) => CidadeModel.fromMap(c)).toList();
-    }
-    return [];
+    final cidadesCollection =
+        _firestore.collection('profissionais').doc(uid).collection('cidades');
+
+    final snapshot = await cidadesCollection.get();
+    return snapshot.docs.map((doc) => CidadeModel.fromMap(doc.data())).toList();
   }
 
   // Busca cidades do estado de SP via API IBGE

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:jao_servico_profissional/controllers/cidade_controller.dart';
+import 'package:jao_servico_profissional/controllers/contatos_controller.dart';
 import 'package:jao_servico_profissional/repositories/cidade_repository.dart';
+import 'package:jao_servico_profissional/repositories/contatos_repository.dart';
 import 'package:jao_servico_profissional/views/cadastro_page.dart';
 import 'package:jao_servico_profissional/views/certificados.dart';
 import 'package:jao_servico_profissional/views/cidades.dart';
@@ -45,11 +47,14 @@ class MyApp extends StatelessWidget {
         '/esqueceuSenha': (context) => const EsqueceuSenha(),
         '/cadastroPage': (context) => const CadastroPage(),
         '/perfilPage': (context) => const PerfilPage(),
-        '/contatos': (context) => const ContatosPage(),
+        '/contatos': (context) => ChangeNotifierProvider(
+              create: (_) => ContatosController(repository: ContatosRepository()),
+              child: const ContatosPage(),
+            ),
         '/certificados': (context) => const CertificadosPage(),
         '/habilidades': (context) => const HabilidadesPage(),
         '/cidades': (context) => ChangeNotifierProvider(
-              create: (_) => CidadeController( repository: CidadeRepository()),
+              create: (_) => CidadeController(repository: CidadeRepository()),
               child: const CidadesPage(),
             ),
         '/negocios': (context) => const NegociosPage(),
