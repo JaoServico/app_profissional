@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:jao_servico_profissional/controllers/cidade_controller.dart';
 import 'package:jao_servico_profissional/controllers/contatos_controller.dart';
+import 'package:jao_servico_profissional/controllers/habilidades_controller.dart';
+import 'package:jao_servico_profissional/controllers/negocio_controller.dart';
 import 'package:jao_servico_profissional/repositories/cidade_repository.dart';
 import 'package:jao_servico_profissional/repositories/contatos_repository.dart';
+import 'package:jao_servico_profissional/repositories/habilidades_repository.dart';
+import 'package:jao_servico_profissional/repositories/negocio_repository.dart';
 import 'package:jao_servico_profissional/views/cadastro_page.dart';
 import 'package:jao_servico_profissional/views/certificados.dart';
 import 'package:jao_servico_profissional/views/cidades.dart';
@@ -52,12 +56,18 @@ class MyApp extends StatelessWidget {
               child: const ContatosPage(),
             ),
         '/certificados': (context) => const CertificadosPage(),
-        '/habilidades': (context) => const HabilidadesPage(),
+        '/habilidades': (context) => ChangeNotifierProvider(
+      create: (_) => HabilidadesController(repository: HabilidadesRepository()),
+      child: const HabilidadesPage(),
+    ),
         '/cidades': (context) => ChangeNotifierProvider(
               create: (_) => CidadeController(repository: CidadeRepository()),
               child: const CidadesPage(),
             ),
-        '/negocios': (context) => const NegociosPage(),
+        '/negocios': (context) => ChangeNotifierProvider(
+              create: (_) => NegocioController(repository: NegocioRepository()),
+              child: const NegociosPage(),
+            ),
         '/': (context) => const Home(),
       },
     );
