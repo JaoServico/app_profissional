@@ -85,77 +85,82 @@ class _ContatosPageState extends State<ContatosPage> {
                     _buildTextField("Instagram", instagramController),
                     _buildTextField("Linkedin", linkedinController),
                     _buildTextField("Site", siteController),
-                    const SizedBox(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (editando) {
-                                final novo = ContatoModel(
-                                  whatsapp: whatsappController.text,
-                                  telefone: telefoneController.text,
-                                  email: emailController.text,
-                                  facebook: facebookController.text,
-                                  instagram: instagramController.text,
-                                  linkedin: linkedinController.text,
-                                  site: siteController.text,
-                                );
-
-                                controller.atualizarContatos(novo);
-                                final sucesso =
-                                    await controller.salvarContatos();
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(sucesso
-                                        ? "Contatos salvos com sucesso!"
-                                        : "Erro ao salvar contatos."),
-                                  ),
-                                );
-                              }
-                              setState(() => editando = !editando);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Cores.laranja,
-                              side: BorderSide(color: Cores.azul, width: 2),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 32, vertical: 12),
-                            ),
-                            child: Text(
-                              editando ? "Concluir" : "Editar",
-                              style: TextStyle(
-                                color: Cores.azul,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Cores.branco,
-                              side: BorderSide(color: Cores.azul, width: 2),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 32, vertical: 12),
-                            ),
-                            child: Text(
-                              "Voltar",
-                              style: TextStyle(
-                                color: Cores.azul,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(height: 80), // espaço pro rodapé
                   ],
                 ),
               ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (editando) {
+                      final novo = ContatoModel(
+                        whatsapp: whatsappController.text,
+                        telefone: telefoneController.text,
+                        email: emailController.text,
+                        facebook: facebookController.text,
+                        instagram: instagramController.text,
+                        linkedin: linkedinController.text,
+                        site: siteController.text,
+                      );
+
+                      controller.atualizarContatos(novo);
+                      final sucesso = await controller.salvarContatos();
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            sucesso
+                                ? "Contatos salvos com sucesso!"
+                                : "Erro ao salvar contatos.",
+                          ),
+                        ),
+                      );
+                    }
+                    setState(() => editando = !editando);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Cores.laranja,
+                    side: BorderSide(color: Cores.azul, width: 2),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 12),
+                  ),
+                  child: Text(
+                    editando ? "Concluir" : "Editar",
+                    style: TextStyle(
+                      color: Cores.azul,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Cores.branco,
+                    side: BorderSide(color: Cores.azul, width: 2),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 12),
+                  ),
+                  child: Text(
+                    "Voltar",
+                    style: TextStyle(
+                      color: Cores.azul,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

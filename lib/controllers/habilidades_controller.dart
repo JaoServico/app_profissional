@@ -9,8 +9,8 @@ class HabilidadesController extends ChangeNotifier {
 
   bool isLoading = false;
 
-  List<Habilidade> _habilidades = [];
-  List<Habilidade> get habilidades => _habilidades;
+  List<HabilidadesModel> _habilidades = [];
+  List<HabilidadesModel> get habilidades => _habilidades;
 
   List<String> habilidadesFiltradas = [];
   List<String> habilidadesSelecionadas = [];
@@ -20,9 +20,9 @@ class HabilidadesController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _habilidades = await repository.getHabilidades();
+      _habilidades = await repository.buscarHabilidades();
       habilidadesSelecionadas =
-          await repository.carregarHabilidadesSelecionadas(uid);
+          await repository.carregarHabilidades(uid);
 
       habilidadesFiltradas = _habilidades.map((h) => h.nome).toList();
     } catch (e) {
@@ -55,7 +55,7 @@ class HabilidadesController extends ChangeNotifier {
 
   Future<bool> salvarHabilidades(String uid) async {
     try {
-      await repository.salvarHabilidadesSelecionadas(
+      await repository.salvarHabilidades(
           uid, habilidadesSelecionadas);
       return true;
     } catch (e) {

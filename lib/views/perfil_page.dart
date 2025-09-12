@@ -54,7 +54,6 @@ class _PerfilPageState extends State<PerfilPage> {
 
         String? fotoUrl = _fotoUrl;
 
-        //Se o usuário selecionou nova imagem, faz upload
         if (_imagemSelecionada != null) {
           fotoUrl =
               await _controller.uploadFotoPerfil(uid, _imagemSelecionada!);
@@ -70,13 +69,15 @@ class _PerfilPageState extends State<PerfilPage> {
 
         setState(() {
           _isEditing = false;
-          _fotoUrl = fotoUrl; //atualiza o preview
-          _imagemSelecionada = null; //limpa a seleção local
+          _fotoUrl = fotoUrl;
+          _imagemSelecionada = null;
         });
 
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perfil salvo com sucesso')),
+          const SnackBar(
+            content: Text('Perfil salvo com sucesso'),
+          ),
         );
       } catch (e) {
         if (!context.mounted) return;
@@ -105,159 +106,164 @@ class _PerfilPageState extends State<PerfilPage> {
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Form(
-                    key: _formkey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Perfil",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Cores.azul,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          "Aqui você consegue acessar e editar suas informações",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, color: Cores.preto),
-                        ),
-                        const SizedBox(height: 30),
-                        // Foto de perfil
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.rectangle,
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(15),
-                            child: _imagemSelecionada != null
-                                ? Image.file(_imagemSelecionada!,
-                                    fit: BoxFit.cover)
-                                : (_fotoUrl != null && _fotoUrl!.isNotEmpty
-                                    ? CachedNetworkImage(
-                                        imageUrl: _fotoUrl!,
-                                        fit: BoxFit.cover,
-                                        placeholder: (context, url) =>
-                                            const Center(
-                                                child:
-                                                    CircularProgressIndicator()),
-                                        errorWidget: (context, url, error) =>
-                                            const Icon(Icons.error),
-                                      )
-                                    : Image.asset('assets/profissional.png',
-                                        fit: BoxFit.cover)),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        GestureDetector(
-                          onTap: _isEditing ? selecionarImagem : null,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 6, horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: _isEditing
-                                  ? Cores.azul.withOpacity(0.1)
-                                  : Cores.azul.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.add_a_photo,
+            : Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Form(
+                          key: _formkey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Perfil",
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
                                   color: Cores.azul,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  "Alterar imagem",
-                                  style: TextStyle(
-                                    color: Cores.azul,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        // Carrossel de ícones
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            GestureDetector(
-                              onTap: () =>
-                                  Navigator.pushNamed(context, '/contatos'),
-                              child: _buildPerfilIcone(
-                                  Icons.people, "Contatos \n"),
-                            ),
-                            GestureDetector(
-                              onTap: () =>
-                                  Navigator.pushNamed(context, '/certificados'),
-                              child: _buildPerfilIcone(
-                                  Icons.school, "Certificados\nFormações"),
-                            ),
-                            GestureDetector(
-                              onTap: () =>
-                                  Navigator.pushNamed(context, '/cidades'),
-                              child: _buildPerfilIcone(
-                                  Icons.location_on, "Cidades \n de atuação"),
-                            ),
-                            GestureDetector(
-                              onTap: () =>
-                                  Navigator.pushNamed(context, '/negocios'),
-                              child: _buildPerfilIcone(
-                                  Icons.business_center, "Negócios\n"),
-                            ),
-                            GestureDetector(
-                              onTap: () =>
-                                  Navigator.pushNamed(context, '/habilidades'),
-                              child: _buildPerfilIcone(
-                                  Icons.star, "Habilidades\n"),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        // Formulário
-                        _buildTextField("Nome", nomeController),
-                        _buildTextField("Detalhes", detalhesController),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  if (_isEditing) {
-                                    salvarPerfil();
-                                  }
-                                  setState(() => _isEditing = !_isEditing);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Cores.laranja,
-                                  side: BorderSide(color: Cores.azul, width: 2),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 32, vertical: 12),
-                                ),
-                                child: Text(
-                                  _isEditing ? "Salvar" : "Editar",
-                                  style: TextStyle(
-                                      color: Cores.azul, fontSize: 18),
                                 ),
                               ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                "Aqui você consegue acessar e editar suas informações",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 16, color: Cores.preto),
+                              ),
+                              const SizedBox(height: 30),
+                              Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.rectangle,
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: _imagemSelecionada != null
+                                      ? Image.file(_imagemSelecionada!,
+                                          fit: BoxFit.cover)
+                                      : (_fotoUrl != null && _fotoUrl!.isNotEmpty
+                                          ? CachedNetworkImage(
+                                              imageUrl: _fotoUrl!,
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) =>
+                                                  const Center(
+                                                      child:
+                                                          CircularProgressIndicator()),
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                      const Icon(Icons.error),
+                                            )
+                                          : Image.asset(
+                                              'assets/profissional.png',
+                                              fit: BoxFit.cover)),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              GestureDetector(
+                                onTap: _isEditing ? selecionarImagem : null,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 6, horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: _isEditing
+                                        ? Cores.azul.withOpacity(0.1)
+                                        : Cores.azul.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.add_a_photo,
+                                        color: Cores.azul,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "Alterar imagem",
+                                        style: TextStyle(
+                                          color: Cores.azul,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () =>
+                                        Navigator.pushNamed(context, '/contatos'),
+                                    child: _buildPerfilIcone(
+                                        Icons.people, "Contatos \n"),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () => Navigator.pushNamed(
+                                        context, '/certificados'),
+                                    child: _buildPerfilIcone(
+                                        Icons.school, "Certificados\nFormações"),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () =>
+                                        Navigator.pushNamed(context, '/cidades'),
+                                    child: _buildPerfilIcone(
+                                        Icons.location_on, "Cidades \n de atuação"),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () =>
+                                        Navigator.pushNamed(context, '/negocios'),
+                                    child: _buildPerfilIcone(
+                                        Icons.business_center, "Negócios\n"),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () =>
+                                        Navigator.pushNamed(context, '/habilidades'),
+                                    child: _buildPerfilIcone(Icons.star, "Habilidades\n"),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              _buildTextField("Nome", nomeController),
+                              _buildTextField("Detalhes", detalhesController),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (_isEditing) {
+                                salvarPerfil();
+                              }
+                              setState(() => _isEditing = !_isEditing);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Cores.laranja,
+                              side: BorderSide(color: Cores.azul, width: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 12),
                             ),
-                          ],
+                            child: Text(
+                              _isEditing ? "Salvar" : "Editar",
+                              style: TextStyle(color: Cores.azul, fontSize: 18),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
               ),
       ),
@@ -293,8 +299,14 @@ class _PerfilPageState extends State<PerfilPage> {
       child: TextFormField(
         controller: controller,
         readOnly: !_isEditing,
+        style: TextStyle(
+          color: _isEditing ? Cores.preto : Colors.grey[600],
+        ),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(
+            color: _isEditing ? Cores.azul : Colors.grey[600],
+          ),
           filled: true,
           fillColor: Cores.branco,
           border: OutlineInputBorder(

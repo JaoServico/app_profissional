@@ -85,77 +85,82 @@ class _NegociosPageState extends State<NegociosPage> {
                     _buildTextField("Cidade", cidadeController),
                     _buildTextField("CNPJ", cnpjController,
                         inputFormatters: [cnpjMask]),
-                    const SizedBox(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (editando) {
-                                final novo = NegocioModel(
-                                  endereco: enderecoController.text,
-                                  numero: numeroController.text,
-                                  bairro: bairroController.text,
-                                  complemento: complementoController.text,
-                                  cep: cepController.text,
-                                  cidade: cidadeController.text,
-                                  cnpj: cnpjController.text,
-                                );
-
-                                controller.atualizarNegocio(novo);
-                                final sucesso =
-                                    await controller.salvarNegocio();
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(sucesso
-                                        ? "Dados do negócio salvos com sucesso!"
-                                        : "Erro ao salvar dados do negócio."),
-                                  ),
-                                );
-                              }
-                              setState(() => editando = !editando);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Cores.laranja,
-                              side: BorderSide(color: Cores.azul, width: 2),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 32, vertical: 12),
-                            ),
-                            child: Text(
-                              editando ? "Concluir" : "Editar",
-                              style: TextStyle(
-                                color: Cores.azul,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Cores.branco,
-                              side: BorderSide(color: Cores.azul, width: 2),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 32, vertical: 12),
-                            ),
-                            child: Text(
-                              "Voltar",
-                              style: TextStyle(
-                                color: Cores.azul,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(height: 80), // espaço pro rodapé
                   ],
                 ),
               ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (editando) {
+                      final novo = NegocioModel(
+                        endereco: enderecoController.text,
+                        numero: numeroController.text,
+                        bairro: bairroController.text,
+                        complemento: complementoController.text,
+                        cep: cepController.text,
+                        cidade: cidadeController.text,
+                        cnpj: cnpjController.text,
+                      );
+
+                      controller.atualizarNegocio(novo);
+                      final sucesso = await controller.salvarNegocio();
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            sucesso
+                                ? "Dados do negócio salvos com sucesso!"
+                                : "Erro ao salvar dados do negócio.",
+                          ),
+                        ),
+                      );
+                    }
+                    setState(() => editando = !editando);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Cores.laranja,
+                    side: BorderSide(color: Cores.azul, width: 2),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 12),
+                  ),
+                  child: Text(
+                    editando ? "Concluir" : "Editar",
+                    style: TextStyle(
+                      color: Cores.azul,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Cores.branco,
+                    side: BorderSide(color: Cores.azul, width: 2),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 12),
+                  ),
+                  child: Text(
+                    "Voltar",
+                    style: TextStyle(
+                      color: Cores.azul,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

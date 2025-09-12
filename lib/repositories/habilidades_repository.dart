@@ -5,15 +5,15 @@ class HabilidadesRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Habilidades disponíveis globalmente
-  Future<List<Habilidade>> getHabilidades() async {
+  Future<List<HabilidadesModel>> buscarHabilidades() async {
     final snapshot = await _firestore.collection('habilidades').get();
     return snapshot.docs
-        .map((doc) => Habilidade.fromFirestore(doc.data(), doc.id))
+        .map((doc) => HabilidadesModel.fromFirestore(doc.data(), doc.id))
         .toList();
   }
 
   /// Salvar habilidades selecionadas do profissional em coleção própria
-  Future<void> salvarHabilidadesSelecionadas(
+  Future<void> salvarHabilidades(
       String uid, List<String> habilidades) async {
     final ref = _firestore
         .collection('profissionais')
@@ -32,7 +32,7 @@ class HabilidadesRepository {
   }
 
   /// Carregar habilidades já selecionadas pelo profissional
-  Future<List<String>> carregarHabilidadesSelecionadas(String uid) async {
+  Future<List<String>> carregarHabilidades(String uid) async {
     final snapshot = await _firestore
         .collection('profissionais')
         .doc(uid)

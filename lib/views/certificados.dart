@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:jao_servico_profissional/cores.dart';
 import '../controllers/certificado_controller.dart';
 import '../repositories/certificado_repository.dart';
-import '../models/rodape.dart';
 
 class CertificadosPage extends StatefulWidget {
   const CertificadosPage({super.key});
@@ -22,6 +21,17 @@ class _CertificadosPageState extends State<CertificadosPage> {
     controller = CertificadoController(repository: CertificadoRepository());
     final uid = FirebaseAuth.instance.currentUser!.uid;
     controller.carregarCertificados(uid);
+  }
+
+  @override
+  void dispose() {
+    for (var c in controller.controllersNome) {
+      c.dispose();
+    }
+    for (var c in controller.controllersData) {
+      c.dispose();
+    }
+    super.dispose();
   }
 
   @override
@@ -59,43 +69,57 @@ class _CertificadosPageState extends State<CertificadosPage> {
                               itemCount: controller.certificados.length,
                               itemBuilder: (context, index) {
                                 return Card(
-                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 8),
                                   child: Padding(
                                     padding: const EdgeInsets.all(8),
                                     child: Column(
                                       children: [
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
                                           children: [
                                             IconButton(
-                                              icon: const Icon(Icons.delete, color: Cores.vermelho),
-                                              onPressed: () => controller.removerCertificado(index),
+                                              icon: const Icon(Icons.delete,
+                                                  color: Cores.vermelho),
+                                              onPressed: () => controller
+                                                  .removerCertificado(index),
                                             ),
                                           ],
                                         ),
                                         TextField(
-                                          controller: controller.controllersNome[index],
+                                          controller:
+                                              controller.controllersNome[index],
                                           decoration: const InputDecoration(
                                             labelText: 'Nome do Certificado',
+                                            filled: true,
+                                            fillColor: Colors.white,
                                             enabledBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(10)),
                                             ),
                                             focusedBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(10)),
                                             ),
                                           ),
                                           maxLines: null,
                                         ),
                                         const SizedBox(height: 10),
                                         TextField(
-                                          controller: controller.controllersData[index],
+                                          controller:
+                                              controller.controllersData[index],
                                           decoration: const InputDecoration(
                                             labelText: 'Data de Conclusão',
+                                            filled: true,
+                                            fillColor: Colors.white,
                                             enabledBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(10)),
                                             ),
                                             focusedBorder: OutlineInputBorder(
-                                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(10)),
                                             ),
                                           ),
                                         ),
@@ -115,10 +139,15 @@ class _CertificadosPageState extends State<CertificadosPage> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Cores.laranja,
                                     foregroundColor: Cores.azul,
-                                    side: BorderSide(color: Cores.azul, width: 2),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    side:
+                                        BorderSide(color: Cores.azul, width: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
                                   ),
-                                  child: const Text("Adicionar Certificado", style: TextStyle(fontSize: 16)),
+                                  child: const Text(
+                                    "Adicionar Certificado",
+                                    style: TextStyle(fontSize: 16),
+                                  ),
                                 ),
                               ),
                             ],
@@ -129,18 +158,34 @@ class _CertificadosPageState extends State<CertificadosPage> {
                               Expanded(
                                 child: ElevatedButton(
                                   onPressed: () async {
-                                    final uid = FirebaseAuth.instance.currentUser!.uid;
+                                    final uid =
+                                        FirebaseAuth.instance.currentUser!.uid;
                                     await controller.salvarCertificados(uid);
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Certificados salvos com sucesso')),
+                                      const SnackBar(
+                                        content: Text(
+                                            'Certificados salvos com sucesso'),
+                                        behavior: SnackBarBehavior.floating,
+                                        margin: EdgeInsets.zero,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius
+                                                .zero), // SnackBar colado na parte inferior
+                                        duration: Duration(seconds: 2),
+                                      ),
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Cores.laranja,
-                                    side: BorderSide(color: Cores.azul, width: 2),
-                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                                    side:
+                                        BorderSide(color: Cores.azul, width: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 32, vertical: 12),
                                   ),
-                                  child: Text("Salvar", style: TextStyle(color: Cores.azul, fontSize: 16)),
+                                  child: Text(
+                                    "Salvar",
+                                    style: TextStyle(
+                                        color: Cores.azul, fontSize: 16),
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 20),
@@ -149,10 +194,14 @@ class _CertificadosPageState extends State<CertificadosPage> {
                                   onPressed: () => Navigator.pop(context),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Cores.branco,
-                                    side: BorderSide(color: Cores.azul, width: 2),
-                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                                    side:
+                                        BorderSide(color: Cores.azul, width: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 32, vertical: 12),
                                   ),
-                                  child: Text("Voltar", style: TextStyle(color: Cores.azul, fontSize: 16)),
+                                  child: Text("Voltar",
+                                      style: TextStyle(
+                                          color: Cores.azul, fontSize: 16)),
                                 ),
                               ),
                             ],
@@ -161,7 +210,6 @@ class _CertificadosPageState extends State<CertificadosPage> {
                       ),
                     ),
             ),
-            bottomNavigationBar: const Rodape(),
           );
         },
       ),

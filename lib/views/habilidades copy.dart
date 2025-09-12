@@ -29,11 +29,8 @@ class _HabilidadesPageState extends State<HabilidadesPage> {
     });
 
     _focusNode.addListener(() {
-      if (_focusNode.hasFocus) {
-        _mostrarDropdown();
-      } else {
-        _removerDropdown();
-      }
+      if (_focusNode.hasFocus) _mostrarDropdown();
+      else _removerDropdown();
     });
   }
 
@@ -51,9 +48,7 @@ class _HabilidadesPageState extends State<HabilidadesPage> {
     if (controller.habilidades.isEmpty) return; // Evita overlay vazio
     controller.filtrarHabilidades('');
     _dropdownOverlay = _criarDropdownOverlay();
-    if (_dropdownOverlay != null) {
-      Overlay.of(context).insert(_dropdownOverlay!);
-    }
+    if (_dropdownOverlay != null) Overlay.of(context)?.insert(_dropdownOverlay!);
   }
 
   void _removerDropdown() {
@@ -67,9 +62,7 @@ class _HabilidadesPageState extends State<HabilidadesPage> {
     if (_dropdownOverlay != null) {
       _removerDropdown();
       _dropdownOverlay = _criarDropdownOverlay();
-      if (_dropdownOverlay != null) {
-        Overlay.of(context).insert(_dropdownOverlay!);
-      }
+      if (_dropdownOverlay != null) Overlay.of(context)?.insert(_dropdownOverlay!);
     }
   }
 
@@ -172,7 +165,6 @@ class _HabilidadesPageState extends State<HabilidadesPage> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        alignment: WrapAlignment.center, // mantém centralizado
                         children: controller.habilidadesSelecionadas
                             .map(
                               (hab) => Chip(
@@ -180,80 +172,72 @@ class _HabilidadesPageState extends State<HabilidadesPage> {
                                 backgroundColor: Cores.laranjaSuave,
                                 labelStyle: TextStyle(color: Cores.azul),
                                 deleteIconColor: Cores.azul,
-                                onDeleted: () => controller
-                                    .removerHabilidadeSelecionada(hab),
+                                onDeleted: () => controller.removerHabilidadeSelecionada(hab),
                               ),
                             )
                             .toList(),
                       ),
-                      const SizedBox(height: 80), // espaço pro rodapé
+                      const SizedBox(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                final uid = FirebaseAuth.instance.currentUser?.uid;
+                                if (uid != null) {
+                                  final sucesso = await controller.salvarHabilidades(uid);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        sucesso
+                                            ? "Habilidades salvas com sucesso!"
+                                            : "Erro ao salvar habilidades.",
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Cores.laranja,
+                                side: BorderSide(color: Cores.azul, width: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 32, vertical: 12),
+                              ),
+                              child: Text(
+                                "Salvar",
+                                style: TextStyle(
+                                  color: Cores.azul,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Cores.branco,
+                                side: BorderSide(color: Cores.azul, width: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 32, vertical: 12),
+                              ),
+                              child: Text(
+                                "Voltar",
+                                style: TextStyle(
+                                  color: Cores.azul,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 );
               },
-            ),
-          ),
-        ),
-
-        // 🔽 Botões fixos no rodapé (agora respeitando SafeArea)
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final controller = context.read<HabilidadesController>();
-                      final uid = FirebaseAuth.instance.currentUser?.uid;
-                      if (uid != null) {
-                        final sucesso = await controller.salvarHabilidades(uid);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              sucesso
-                                  ? "Habilidades salvas com sucesso!"
-                                  : "Erro ao salvar habilidades.",
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Cores.laranja,
-                      side: BorderSide(color: Cores.azul, width: 2),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 12),
-                    ),
-                    child: Text(
-                      "Salvar",
-                      style: TextStyle(
-                        color: Cores.azul,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Cores.branco,
-                      side: BorderSide(color: Cores.azul, width: 2),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 12),
-                    ),
-                    child: Text(
-                      "Voltar",
-                      style: TextStyle(
-                        color: Cores.azul,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ),

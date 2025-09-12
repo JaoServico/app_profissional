@@ -1,11 +1,11 @@
-class Habilidade {
+class HabilidadesModel {
   final String id;
   final String nome;
 
-  Habilidade({required this.id, required this.nome});
+  HabilidadesModel({required this.id, required this.nome});
 
-  factory Habilidade.fromFirestore(Map<String, dynamic> data, String id) {
-    return Habilidade(
+  factory HabilidadesModel.fromFirestore(Map<String, dynamic> data, String id) {
+    return HabilidadesModel(
       id: id,
       nome: data['nome'] ?? '',
     );
