@@ -130,8 +130,8 @@ class _PerfilPageState extends State<PerfilPage> {
                               const Text(
                                 "Aqui você consegue acessar e editar suas informações",
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 16, color: Cores.preto),
+                                style:
+                                    TextStyle(fontSize: 16, color: Cores.preto),
                               ),
                               const SizedBox(height: 30),
                               Container(
@@ -146,7 +146,8 @@ class _PerfilPageState extends State<PerfilPage> {
                                   child: _imagemSelecionada != null
                                       ? Image.file(_imagemSelecionada!,
                                           fit: BoxFit.cover)
-                                      : (_fotoUrl != null && _fotoUrl!.isNotEmpty
+                                      : (_fotoUrl != null &&
+                                              _fotoUrl!.isNotEmpty
                                           ? CachedNetworkImage(
                                               imageUrl: _fotoUrl!,
                                               fit: BoxFit.cover,
@@ -196,39 +197,45 @@ class _PerfilPageState extends State<PerfilPage> {
                                 ),
                               ),
                               const SizedBox(height: 30),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () =>
-                                        Navigator.pushNamed(context, '/contatos'),
-                                    child: _buildPerfilIcone(
-                                        Icons.people, "Contatos \n"),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => Navigator.pushNamed(
-                                        context, '/certificados'),
-                                    child: _buildPerfilIcone(
-                                        Icons.school, "Certificados\nFormações"),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () =>
-                                        Navigator.pushNamed(context, '/cidades'),
-                                    child: _buildPerfilIcone(
-                                        Icons.location_on, "Cidades \n de atuação"),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () =>
-                                        Navigator.pushNamed(context, '/negocios'),
-                                    child: _buildPerfilIcone(
-                                        Icons.business_center, "Negócios\n"),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () =>
-                                        Navigator.pushNamed(context, '/habilidades'),
-                                    child: _buildPerfilIcone(Icons.star, "Habilidades\n"),
-                                  ),
-                                ],
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => Navigator.pushNamed(
+                                          context, '/contatos'),
+                                      child: _buildPerfilIcone(
+                                          Icons.people, "Contatos \n"),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => Navigator.pushNamed(
+                                          context, '/certificados'),
+                                      child: _buildPerfilIcone(Icons.school,
+                                          "Certificados\nFormações"),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => Navigator.pushNamed(
+                                          context, '/cidades'),
+                                      child: _buildPerfilIcone(
+                                          Icons.location_on,
+                                          "Cidades \n de atuação"),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => Navigator.pushNamed(
+                                          context, '/negocios'),
+                                      child: _buildPerfilIcone(
+                                          Icons.business_center, "Negócios\n"),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => Navigator.pushNamed(
+                                          context, '/habilidades'),
+                                      child: _buildPerfilIcone(
+                                          Icons.star, "Habilidades\n"),
+                                    ),
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 10),
                               _buildTextField("Nome", nomeController),
@@ -275,19 +282,26 @@ class _PerfilPageState extends State<PerfilPage> {
     return Column(
       children: [
         Container(
-          height: 60,
-          width: 60,
+          height: 70,
+          width: 70,
           decoration: BoxDecoration(
-            color: Cores.azul.withOpacity(0.1),
+            color: Cores.laranja,
             shape: BoxShape.circle,
+            border: Border.all(color: Cores.azul, width: 2),
           ),
-          child: Icon(icone, color: Cores.azul, size: 30),
+          child: Icon(icone, color: Cores.azul, size: 35),
         ),
-        const SizedBox(height: 4),
-        Text(
-          texto,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Cores.azul, fontSize: 12),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: 80,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              texto,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Cores.azul, fontSize: 12),
+            ),
+          ),
         ),
       ],
     );

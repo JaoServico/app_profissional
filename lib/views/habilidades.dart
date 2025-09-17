@@ -48,7 +48,7 @@ class _HabilidadesPageState extends State<HabilidadesPage> {
   void _mostrarDropdown() {
     _removerDropdown();
     final controller = context.read<HabilidadesController>();
-    if (controller.habilidades.isEmpty) return; // Evita overlay vazio
+    if (controller.habilidades.isEmpty) return;
     controller.filtrarHabilidades('');
     _dropdownOverlay = _criarDropdownOverlay();
     if (_dropdownOverlay != null) {
@@ -129,131 +129,135 @@ class _HabilidadesPageState extends State<HabilidadesPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                return SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Text(
-                        'Habilidades',
-                        style: TextStyle(
-                          color: Cores.azul,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Adicione e edite suas habilidades aqui',
-                        style: TextStyle(
-                          color: Cores.preto,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      CompositedTransformTarget(
-                        link: _layerLink,
-                        child: TextField(
-                          controller: _searchController,
-                          focusNode: _focusNode,
-                          onChanged: _atualizarFiltro,
-                          decoration: InputDecoration(
-                            labelText: 'Buscar habilidade',
-                            filled: true,
-                            fillColor: Colors.white,
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                return Column(
+                  children: [
+                    // Conteúdo rolável
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            Text(
+                              'Habilidades',
+                              style: TextStyle(
+                                color: Cores.azul,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 24,
+                              ),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Adicione e edite suas habilidades aqui',
+                              style: TextStyle(
+                                color: Cores.preto,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            CompositedTransformTarget(
+                              link: _layerLink,
+                              child: TextField(
+                                controller: _searchController,
+                                focusNode: _focusNode,
+                                onChanged: _atualizarFiltro,
+                                decoration: InputDecoration(
+                                  labelText: 'Buscar habilidade',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.center,
+                              children: controller.habilidadesSelecionadas
+                                  .map(
+                                    (hab) => Chip(
+                                      label: Text(hab),
+                                      backgroundColor: Cores.laranjaSuave,
+                                      labelStyle: TextStyle(color: Cores.azul),
+                                      deleteIconColor: Cores.azul,
+                                      onDeleted: () => controller
+                                          .removerHabilidadeSelecionada(hab),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Botões no rodapé (dentro do body)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final controller =
+                                  context.read<HabilidadesController>();
+                              final uid =
+                                  FirebaseAuth.instance.currentUser?.uid;
+                              if (uid != null) {
+                                final sucesso =
+                                    await controller.salvarHabilidades(uid);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      sucesso
+                                          ? "Habilidades salvas com sucesso!"
+                                          : "Erro ao salvar habilidades.",
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Cores.laranja,
+                              side: BorderSide(color: Cores.azul, width: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 12),
+                            ),
+                            child: Text(
+                              "Salvar",
+                              style: TextStyle(
+                                color: Cores.azul,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        alignment: WrapAlignment.center, // mantém centralizado
-                        children: controller.habilidadesSelecionadas
-                            .map(
-                              (hab) => Chip(
-                                label: Text(hab),
-                                backgroundColor: Cores.laranjaSuave,
-                                labelStyle: TextStyle(color: Cores.azul),
-                                deleteIconColor: Cores.azul,
-                                onDeleted: () => controller
-                                    .removerHabilidadeSelecionada(hab),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Cores.branco,
+                              side: BorderSide(color: Cores.azul, width: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 12),
+                            ),
+                            child: Text(
+                              "Voltar",
+                              style: TextStyle(
+                                color: Cores.azul,
+                                fontSize: 16,
                               ),
-                            )
-                            .toList(),
-                      ),
-                      const SizedBox(height: 80), // espaço pro rodapé
-                    ],
-                  ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 );
               },
-            ),
-          ),
-        ),
-
-        // 🔽 Botões fixos no rodapé (agora respeitando SafeArea)
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final controller = context.read<HabilidadesController>();
-                      final uid = FirebaseAuth.instance.currentUser?.uid;
-                      if (uid != null) {
-                        final sucesso = await controller.salvarHabilidades(uid);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              sucesso
-                                  ? "Habilidades salvas com sucesso!"
-                                  : "Erro ao salvar habilidades.",
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Cores.laranja,
-                      side: BorderSide(color: Cores.azul, width: 2),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 12),
-                    ),
-                    child: Text(
-                      "Salvar",
-                      style: TextStyle(
-                        color: Cores.azul,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Cores.branco,
-                      side: BorderSide(color: Cores.azul, width: 2),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 12),
-                    ),
-                    child: Text(
-                      "Voltar",
-                      style: TextStyle(
-                        color: Cores.azul,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ),

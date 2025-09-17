@@ -56,112 +56,127 @@ class _NegociosPageState extends State<NegociosPage> {
       body: SafeArea(
         child: controller.isLoading
             ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
+            : Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      "Negócios",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Cores.azul,
+                    // Conteúdo rolável
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Negócios",
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Cores.azul,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              "Cadastre e edite aqui os dados do seu negócio ou estabelecimento",
+                              style: TextStyle(fontSize: 16),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 30),
+                            _buildTextField("Endereço", enderecoController),
+                            _buildTextField("Número", numeroController),
+                            _buildTextField("Bairro", bairroController),
+                            _buildTextField(
+                                "Complemento", complementoController),
+                            _buildTextField("CEP", cepController,
+                                inputFormatters: [cepMask]),
+                            _buildTextField("Cidade", cidadeController),
+                            _buildTextField("CNPJ", cnpjController,
+                                inputFormatters: [cnpjMask]),
+                            const SizedBox(
+                                height:
+                                    10), // pequeno espaçamento antes dos botões
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Cadastre e edite aqui os dados do seu negócio ou estabelecimento",
-                      style: TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
+
+                    // --------- BOTÕES (dentro do body, abaixo do conteúdo) ----------
+                    // Desta forma o SnackBar aparecerá como na CidadesPage:
+                    // acima do menu do sistema / SafeArea, e não "em cima" dos botões.
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (editando) {
+                                final novo = NegocioModel(
+                                  endereco: enderecoController.text,
+                                  numero: numeroController.text,
+                                  bairro: bairroController.text,
+                                  complemento: complementoController.text,
+                                  cep: cepController.text,
+                                  cidade: cidadeController.text,
+                                  cnpj: cnpjController.text,
+                                );
+
+                                controller.atualizarNegocio(novo);
+                                final sucesso =
+                                    await controller.salvarNegocio();
+
+                                // SnackBar padrão (sem behavior/floating) para ficar colado na base
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      sucesso
+                                          ? "Dados do negócio salvos com sucesso!"
+                                          : "Erro ao salvar dados do negócio.",
+                                    ),
+                                  ),
+                                );
+                              }
+                              setState(() => editando = !editando);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Cores.laranja,
+                              side: BorderSide(color: Cores.azul, width: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 12),
+                            ),
+                            child: Text(
+                              editando ? "Concluir" : "Editar",
+                              style: TextStyle(
+                                color: Cores.azul,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Cores.branco,
+                              side: BorderSide(color: Cores.azul, width: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 12),
+                            ),
+                            child: Text(
+                              "Voltar",
+                              style: TextStyle(
+                                color: Cores.azul,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 30),
-                    _buildTextField("Endereço", enderecoController),
-                    _buildTextField("Número", numeroController),
-                    _buildTextField("Bairro", bairroController),
-                    _buildTextField("Complemento", complementoController),
-                    _buildTextField("CEP", cepController,
-                        inputFormatters: [cepMask]),
-                    _buildTextField("Cidade", cidadeController),
-                    _buildTextField("CNPJ", cnpjController,
-                        inputFormatters: [cnpjMask]),
-                    const SizedBox(height: 80), // espaço pro rodapé
                   ],
                 ),
               ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (editando) {
-                      final novo = NegocioModel(
-                        endereco: enderecoController.text,
-                        numero: numeroController.text,
-                        bairro: bairroController.text,
-                        complemento: complementoController.text,
-                        cep: cepController.text,
-                        cidade: cidadeController.text,
-                        cnpj: cnpjController.text,
-                      );
-
-                      controller.atualizarNegocio(novo);
-                      final sucesso = await controller.salvarNegocio();
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            sucesso
-                                ? "Dados do negócio salvos com sucesso!"
-                                : "Erro ao salvar dados do negócio.",
-                          ),
-                        ),
-                      );
-                    }
-                    setState(() => editando = !editando);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Cores.laranja,
-                    side: BorderSide(color: Cores.azul, width: 2),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 12),
-                  ),
-                  child: Text(
-                    editando ? "Concluir" : "Editar",
-                    style: TextStyle(
-                      color: Cores.azul,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Cores.branco,
-                    side: BorderSide(color: Cores.azul, width: 2),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 12),
-                  ),
-                  child: Text(
-                    "Voltar",
-                    style: TextStyle(
-                      color: Cores.azul,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      // bottomNavigationBar removido intencionalmente — botões estão dentro do body
     );
   }
 

@@ -122,7 +122,10 @@ class _CidadesPageState extends State<CidadesPage> {
       builder: (context, controller, _) {
         if (controller.isLoading) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            backgroundColor: Cores.laranjaMuitoSuave,
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
           );
         }
 
@@ -179,8 +182,7 @@ class _CidadesPageState extends State<CidadesPage> {
                               backgroundColor: Cores.laranjaSuave,
                               labelStyle: TextStyle(color: Cores.azul),
                               deleteIconColor: Cores.azul,
-                              onDeleted: () =>
-                                  controller.removerCidade(c.nome),
+                              onDeleted: () => controller.removerCidade(c.nome),
                             ),
                           )
                           .toList(),
@@ -194,8 +196,8 @@ class _CidadesPageState extends State<CidadesPage> {
                               await controller.salvarCidades();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text(
-                                        'Cidades salvas com sucesso!')),
+                                    content:
+                                        Text('Cidades salvas com sucesso!')),
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -206,8 +208,7 @@ class _CidadesPageState extends State<CidadesPage> {
                             ),
                             child: Text(
                               "Salvar",
-                              style:
-                                  TextStyle(color: Cores.azul, fontSize: 16),
+                              style: TextStyle(color: Cores.azul, fontSize: 16),
                             ),
                           ),
                         ),
@@ -223,8 +224,7 @@ class _CidadesPageState extends State<CidadesPage> {
                             ),
                             child: Text(
                               "Voltar",
-                              style:
-                                  TextStyle(color: Cores.azul, fontSize: 16),
+                              style: TextStyle(color: Cores.azul, fontSize: 16),
                             ),
                           ),
                         ),
