@@ -10,15 +10,36 @@ class CidadesPage extends StatefulWidget {
   State<CidadesPage> createState() => _CidadesPageState();
 }
 
-class _CidadesPageState extends State<CidadesPage> {
+class _CidadesPageState extends State<CidadesPage>
+    with SingleTickerProviderStateMixin {
   final LayerLink _layerLink = LayerLink();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   OverlayEntry? _dropdownOverlay;
+  bool _isSaving = false;
+
+  late final AnimationController _loaderController;
+  late final Animation<double> _loaderAnimation;
 
   @override
   void initState() {
     super.initState();
+
+    // Loader animation
+    _loaderController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _loaderAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+      CurvedAnimation(parent: _loaderController, curve: Curves.easeInOut),
+    );
+    _loaderController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _loaderController.reverse();
+      } else if (status == AnimationStatus.dismissed) {
+        _loaderController.forward();
+      }
+    });
 
     // Inicializa controller e carrega cidades
     final controller = context.read<CidadeController>();
@@ -36,7 +57,7 @@ class _CidadesPageState extends State<CidadesPage> {
 
   @override
   void dispose() {
-    _removeDropdown();
+    _loaderController.dispose();
     _searchController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -45,7 +66,7 @@ class _CidadesPageState extends State<CidadesPage> {
   void _showDropdown() {
     _removeDropdown();
     _dropdownOverlay = _createDropdownOverlay();
-    Overlay.of(context).insert(_dropdownOverlay!);
+    if (_dropdownOverlay != null) Overlay.of(context).insert(_dropdownOverlay!);
   }
 
   void _removeDropdown() {
@@ -54,11 +75,12 @@ class _CidadesPageState extends State<CidadesPage> {
   }
 
   void _updateFilter(String text) {
-    setState(() {}); // rebuild para filtrar lista
+    setState(() {});
     if (_dropdownOverlay != null) {
       _removeDropdown();
       _dropdownOverlay = _createDropdownOverlay();
-      Overlay.of(context).insert(_dropdownOverlay!);
+      if (_dropdownOverlay != null)
+        Overlay.of(context).insert(_dropdownOverlay!);
     }
   }
 
@@ -116,24 +138,46 @@ class _CidadesPageState extends State<CidadesPage> {
     );
   }
 
+  Future<void> _salvarCidades() async {
+    final controller = context.read<CidadeController>();
+    setState(() => _isSaving = true);
+    _loaderController.forward();
+
+    final sucesso = await controller.salvarCidades();
+
+    _loaderController.stop();
+    _loaderController.reset();
+    setState(() => _isSaving = false);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Dados do negócio salvos com sucesso!"),
+        duration: Duration(seconds: 3),
+        behavior: SnackBarBehavior.fixed,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Consumer<CidadeController>(
-      builder: (context, controller, _) {
-        if (controller.isLoading) {
-          return const Scaffold(
-            backgroundColor: Cores.laranjaMuitoSuave,
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
+    final controller = context.watch<CidadeController>();
 
-        return GestureDetector(
-          onTap: () => _focusNode.unfocus(),
-          child: Scaffold(
-            backgroundColor: Cores.laranjaMuitoSuave,
-            body: SafeArea(
+    if (controller.isLoading) {
+      return const Scaffold(
+        backgroundColor: Cores.laranjaMuitoSuave,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () => _focusNode.unfocus(),
+      child: Scaffold(
+        backgroundColor: Cores.laranjaMuitoSuave,
+        body: Stack(
+          children: [
+            SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
@@ -192,14 +236,7 @@ class _CidadesPageState extends State<CidadesPage> {
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () async {
-                              await controller.salvarCidades();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text('Cidades salvas com sucesso!')),
-                              );
-                            },
+                            onPressed: _isSaving ? null : _salvarCidades,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Cores.laranja,
                               side: BorderSide(color: Cores.azul, width: 2),
@@ -234,9 +271,30 @@ class _CidadesPageState extends State<CidadesPage> {
                 ),
               ),
             ),
-          ),
-        );
-      },
+
+            // 🔽 Loader animado com IgnorePointer
+            if (_isSaving)
+              IgnorePointer(
+                ignoring: !_isSaving,
+                child: AnimatedOpacity(
+                  opacity: _isSaving ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Container(
+                    color: Cores.laranjaMuitoSuave.withOpacity(0.5),
+                    child: Center(
+                      child: ScaleTransition(
+                        scale: _loaderAnimation,
+                        child: CircularProgressIndicator(
+                          color: Cores.azul,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

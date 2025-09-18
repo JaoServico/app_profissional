@@ -11,11 +11,16 @@ class HabilidadesPage extends StatefulWidget {
   State<HabilidadesPage> createState() => _HabilidadesPageState();
 }
 
-class _HabilidadesPageState extends State<HabilidadesPage> {
+class _HabilidadesPageState extends State<HabilidadesPage>
+    with SingleTickerProviderStateMixin {
   final LayerLink _layerLink = LayerLink();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   OverlayEntry? _dropdownOverlay;
+
+  bool _isSaving = false;
+  late final AnimationController _loaderController;
+  late final Animation<double> _loaderAnimation;
 
   @override
   void initState() {
@@ -35,10 +40,27 @@ class _HabilidadesPageState extends State<HabilidadesPage> {
         _removerDropdown();
       }
     });
+
+    // Loader animation
+    _loaderController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _loaderAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+      CurvedAnimation(parent: _loaderController, curve: Curves.easeInOut),
+    );
+    _loaderController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _loaderController.reverse();
+      } else if (status == AnimationStatus.dismissed) {
+        _loaderController.forward();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _loaderController.dispose();
     _removerDropdown();
     _searchController.dispose();
     _focusNode.dispose();
@@ -114,152 +136,186 @@ class _HabilidadesPageState extends State<HabilidadesPage> {
     );
   }
 
+  Future<void> _salvarHabilidades() async {
+    final controller = context.read<HabilidadesController>();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    setState(() => _isSaving = true);
+    _loaderController.forward();
+
+    final sucesso = await controller.salvarHabilidades(uid);
+
+    _loaderController.stop();
+    _loaderController.reset();
+    setState(() => _isSaving = false);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          sucesso
+              ? "Habilidades salvas com sucesso!"
+              : "Erro ao salvar habilidades.",
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _focusNode.unfocus(),
       child: Scaffold(
         backgroundColor: Cores.laranjaMuitoSuave,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Consumer<HabilidadesController>(
-              builder: (context, controller, _) {
-                if (controller.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Consumer<HabilidadesController>(
+                  builder: (context, controller, _) {
+                    if (controller.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                return Column(
-                  children: [
-                    // Conteúdo rolável
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            Text(
-                              'Habilidades',
-                              style: TextStyle(
-                                color: Cores.azul,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 24,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Adicione e edite suas habilidades aqui',
-                              style: TextStyle(
-                                color: Cores.preto,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            CompositedTransformTarget(
-                              link: _layerLink,
-                              child: TextField(
-                                controller: _searchController,
-                                focusNode: _focusNode,
-                                onChanged: _atualizarFiltro,
-                                decoration: InputDecoration(
-                                  labelText: 'Buscar habilidade',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                    return Column(
+                      children: [
+                        // Conteúdo rolável
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Habilidades',
+                                  style: TextStyle(
+                                    color: Cores.azul,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
                                   ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Adicione e edite suas habilidades aqui',
+                                  style: TextStyle(
+                                    color: Cores.preto,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                CompositedTransformTarget(
+                                  link: _layerLink,
+                                  child: TextField(
+                                    controller: _searchController,
+                                    focusNode: _focusNode,
+                                    onChanged: _atualizarFiltro,
+                                    decoration: InputDecoration(
+                                      labelText: 'Buscar habilidade',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  alignment: WrapAlignment.center,
+                                  children: controller.habilidadesSelecionadas
+                                      .map(
+                                        (hab) => Chip(
+                                          label: Text(hab),
+                                          backgroundColor: Cores.laranjaSuave,
+                                          labelStyle:
+                                              TextStyle(color: Cores.azul),
+                                          deleteIconColor: Cores.azul,
+                                          onDeleted: () => controller
+                                              .removerHabilidadeSelecionada(hab),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Botões no rodapé
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed:
+                                    _isSaving ? null : _salvarHabilidades,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Cores.laranja,
+                                  side: BorderSide(color: Cores.azul, width: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 32, vertical: 12),
+                                ),
+                                child: Text(
+                                  "Salvar",
+                                  style: TextStyle(
+                                    color: Cores.azul,
+                                    fontSize: 16,
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 20),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              alignment: WrapAlignment.center,
-                              children: controller.habilidadesSelecionadas
-                                  .map(
-                                    (hab) => Chip(
-                                      label: Text(hab),
-                                      backgroundColor: Cores.laranjaSuave,
-                                      labelStyle: TextStyle(color: Cores.azul),
-                                      deleteIconColor: Cores.azul,
-                                      onDeleted: () => controller
-                                          .removerHabilidadeSelecionada(hab),
-                                    ),
-                                  )
-                                  .toList(),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Cores.branco,
+                                  side: BorderSide(color: Cores.azul, width: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 32, vertical: 12),
+                                ),
+                                child: Text(
+                                  "Voltar",
+                                  style: TextStyle(
+                                    color: Cores.azul,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // 🔽 Loader
+            if (_isSaving)
+              IgnorePointer(
+                ignoring: true,
+                child: Container(
+                  color: Cores.laranjaMuitoSuave.withOpacity(0.5),
+                  child: Center(
+                    child: ScaleTransition(
+                      scale: _loaderAnimation,
+                      child: CircularProgressIndicator(
+                        color: Cores.azul,
                       ),
                     ),
-
-                    // Botões no rodapé (dentro do body)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final controller =
-                                  context.read<HabilidadesController>();
-                              final uid =
-                                  FirebaseAuth.instance.currentUser?.uid;
-                              if (uid != null) {
-                                final sucesso =
-                                    await controller.salvarHabilidades(uid);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      sucesso
-                                          ? "Habilidades salvas com sucesso!"
-                                          : "Erro ao salvar habilidades.",
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Cores.laranja,
-                              side: BorderSide(color: Cores.azul, width: 2),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 32, vertical: 12),
-                            ),
-                            child: Text(
-                              "Salvar",
-                              style: TextStyle(
-                                color: Cores.azul,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Cores.branco,
-                              side: BorderSide(color: Cores.azul, width: 2),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 32, vertical: 12),
-                            ),
-                            child: Text(
-                              "Voltar",
-                              style: TextStyle(
-                                color: Cores.azul,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

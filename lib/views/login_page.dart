@@ -9,7 +9,8 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
   bool _isLoading = false;
@@ -66,7 +67,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Erro ao fazer login. Verifique os dados")),
+          const SnackBar(
+              content: Text("Erro ao fazer login. Verifique os dados")),
         );
       }
     }
@@ -136,7 +138,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                     height: 120,
                   ),
                   const SizedBox(height: 20),
-                  Text(
+                  const Text(
                     "Login",
                     style: TextStyle(
                       fontSize: 28,
@@ -148,7 +150,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                   Text(
                     "Entre no app para cadastrar seus serviços",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Cores.branco.withOpacity(0.9)),
+                    style: TextStyle(
+                        fontSize: 16, color: Cores.branco.withOpacity(0.9)),
                   ),
                   const SizedBox(height: 40),
                   Form(
@@ -159,8 +162,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                           controller: _emailController,
                           labelText: "Email",
                           validator: (value) {
-                            if (value == null || value.isEmpty) return "Digite o email";
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                            if (value == null || value.isEmpty)
+                              return "Digite o email";
+                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                .hasMatch(value)) {
                               return 'E-mail inválido';
                             }
                             return null;
@@ -172,8 +177,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                           labelText: "Senha",
                           obscureText: !_senhaVisivel,
                           validator: (value) {
-                            if (value == null || value.isEmpty) return "Digite a senha";
-                            if (value.length < 6) return "A senha deve ter no mínimo 6 caracteres";
+                            if (value == null || value.isEmpty)
+                              return "Digite a senha";
+                            if (value.length < 6)
+                              return "A senha deve ter no mínimo 6 caracteres";
                             return null;
                           },
                         ),
@@ -189,7 +196,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Cores.branco,
                             side: BorderSide(color: Cores.azul),
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 12),
                           ),
                           child: Text(
                             "Entrar",
@@ -204,7 +212,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                     onTap: () {
                       Navigator.pushNamed(context, '/esqueceuSenha');
                     },
-                    child: Text(
+                    child: const Text(
                       "Esqueci a senha",
                       style: TextStyle(
                         color: Cores.branco,
@@ -218,7 +226,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                     onTap: () {
                       Navigator.pushNamed(context, '/cadastroPage');
                     },
-                    child: Text(
+                    child: const Text(
                       "Criar conta",
                       style: TextStyle(
                         color: Cores.branco,
@@ -243,7 +251,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 child: Center(
                   child: ScaleTransition(
                     scale: _loaderAnimation,
-                    child:  CircularProgressIndicator(
+                    child: CircularProgressIndicator(
                       color: Cores.azul,
                     ),
                   ),
